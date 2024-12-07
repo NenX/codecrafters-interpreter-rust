@@ -17,6 +17,8 @@ fn main() {
             let mut scanner = Scanner::new(b);
             scanner.scan_tokens().expect("scan_tokens");
             scanner.print_tokens();
+
+            println!("EOF  null"); // Placeholder, remove this line when implementing the scanner
         }
     }
 }
