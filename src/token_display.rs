@@ -7,7 +7,7 @@ impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let lexeme = String::from_utf8(self.lexeme.to_vec()).unwrap();
         match &self.token_type {
-            IDENTIFIER(s) => write!(f, "IDENTIFIER {} {}", lexeme, s),
+            IDENTIFIER(s) => write!(f, "IDENTIFIER {} null", lexeme,),
             STRING(s) => write!(f, "STRING {} {}", lexeme, s),
             NUMBER(d) => write!(f, "NUMBER {} {:?}", lexeme, d),
             LeftParen => write!(f, "LEFT_PAREN {} null", lexeme),
