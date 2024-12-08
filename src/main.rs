@@ -7,6 +7,7 @@ use bytes::Bytes;
 use clap::Parser;
 use codecrafters_interpreter::command::ArgsParser;
 use codecrafters_interpreter::command::Cmd;
+use codecrafters_interpreter::error::HAD_ERROR;
 use codecrafters_interpreter::lox::Lox;
 use codecrafters_interpreter::scanner::Scanner;
 
@@ -14,8 +15,8 @@ fn main() {
     let x = ArgsParser::parse();
     match x.cmds {
         Cmd::Tokenize { file } => {
-            let res = Lox::run_file(file);
-            if res.is_err() {
+            Lox::run_file(file).expect("run file");
+            if unsafe { HAD_ERROR } {
                 process::exit(65)
             }
         }

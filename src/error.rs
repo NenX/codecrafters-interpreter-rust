@@ -18,7 +18,7 @@ impl Display for MyErrImpl {
     }
 }
 
-static mut HAD_ERROR: bool = false;
+pub static mut HAD_ERROR: bool = false;
 pub fn my_error(line: usize, message: String) {
     report(line, "".to_string(), message);
 }
