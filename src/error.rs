@@ -22,6 +22,9 @@ pub static mut HAD_ERROR: bool = false;
 pub fn my_error(line: usize, message: String) {
     report(line, "".to_string(), message);
 }
+pub fn unexpected_terminal_err(line: usize) {
+    my_error(line, format!("Unterminated string."));
+}
 
 fn report(line: usize, r#where: String, message: String) {
     let msg = format!("[line {}] Error{}: {}", line, r#where, message);

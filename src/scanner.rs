@@ -1,3 +1,5 @@
+use std::fmt::format;
+
 use anyhow::Context;
 use atoi::atoi;
 use bytes::{Buf, Bytes};
@@ -5,7 +7,7 @@ use clap::builder::Str;
 
 use crate::{
     constants::keywords_map,
-    error::{my_error, MyErr, MyResult},
+    error::{my_error, unexpected_terminal_err, MyErr, MyResult},
     token::Token,
     token_type::TokenType,
 };
@@ -37,6 +39,9 @@ impl Scanner {
     pub fn scan_tokens(&mut self) -> MyResult<()> {
         while !self.is_at_end() {
             self.scan_token()?;
+        }
+        if self.is_at_end() {
+            self.add_token(EOF);
         }
         Ok(())
     }
@@ -97,7 +102,13 @@ impl Scanner {
                 self.flush();
                 return Ok(());
             }
-            b'"' => self.string()?,
+            b'"' => {
+                let r = self.string();
+                match r {
+                    Some(t) => t,
+                    None => return Ok(()),
+                }
+            }
 
             _ if [b' ', b'\t', b'\r'].contains(&b) => {
                 self.flush();
@@ -159,11 +170,13 @@ impl Scanner {
             line: self.line,
         });
     }
-    fn string(&mut self) -> MyResult<TokenType> {
+    fn string(&mut self) -> Option<TokenType> {
         loop {
-            let b = self
-                .peek()
-                .context("expected double quote but met unexpected terminal")?;
+            let Some(b) = self.peek() else {
+                unexpected_terminal_err(self.line);
+                self.flush();
+                return None;
+            };
             if b == b'\n' {
                 self.line += 1;
             }
@@ -171,7 +184,7 @@ impl Scanner {
             if b == b'"' {
                 let literal = self.source.slice(self.start + 1..self.current - 1);
                 let literal = String::from_utf8(literal.to_vec()).unwrap();
-                return Ok(STRING(literal));
+                return Some(STRING(literal));
             }
         }
     }
