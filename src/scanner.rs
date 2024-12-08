@@ -108,6 +108,7 @@ impl Scanner {
             _ => {
                 let char = String::from_utf8([b].to_vec()).unwrap();
                 my_error(self.line, format!("Unexpected character: {}", char));
+                self.flush();
                 return Ok(());
             }
         };
