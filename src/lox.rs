@@ -2,17 +2,23 @@ use std::{error::Error, path::PathBuf};
 
 use bytes::Bytes;
 
-use crate::error::{MyErrImpl, MyResult};
+use crate::{
+    error::{MyErrImpl, MyResult},
+    scanner::Scanner,
+};
 
 pub struct Lox {}
 impl Lox {
-    pub async fn run_file(path: PathBuf) -> MyResult<Bytes> {
-        let r = tokio::fs::read(path).await?;
+    pub fn run_file(path: PathBuf) -> MyResult<()> {
+        let r = std::fs::read(path).expect("read file");
         let b = bytes::Bytes::from(r);
-        Ok(b)
+        Self::run(b)
     }
-    fn run(path: PathBuf) -> MyResult<()> {
+    fn run(b: Bytes) -> MyResult<()> {
+        let mut scanner = Scanner::new(b);
+        scanner.scan_tokens().expect("scan_tokens");
+        scanner.print_tokens();
+
         Ok(())
     }
- 
 }

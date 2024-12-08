@@ -232,8 +232,7 @@ impl Scanner {
 fn aa() {
     let src = Bytes::from(
         r#"
-    1
-    ,.$(#
+@
     "#,
     );
     let mut scanner = Scanner::new(src);
