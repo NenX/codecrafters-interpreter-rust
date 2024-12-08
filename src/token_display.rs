@@ -29,7 +29,7 @@ impl Display for Token {
             GREATER => write!(f, "GREATER {} null", lexeme),
             GreaterEqual => write!(f, "GREATER_EQUAL {} null", lexeme),
             LESS => write!(f, "LESS {} null", lexeme),
-            LessEqual => write!(f, "LESSE_QUAL {} null", lexeme),
+            LessEqual => write!(f, "LESS_EQUAL {} null", lexeme),
             AND => write!(f, "AND {} null", lexeme),
             CLASS => write!(f, "CLASS {} null", lexeme),
             ELSE => write!(f, "ELSE {} null", lexeme),
