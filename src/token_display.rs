@@ -3,14 +3,13 @@ use std::fmt::Display;
 use crate::{token::Token, token_type::TokenType};
 use TokenType::*;
 
-
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let lexeme = String::from_utf8(self.lexeme.to_vec()).unwrap();
         match &self.token_type {
             IDENTIFIER(s) => write!(f, "IDENTIFIER {} {}", lexeme, s),
             STRING(s) => write!(f, "STRING {} {}", lexeme, s),
-            NUMBER(d) => write!(f, "NUMBER {} {}", lexeme, d),
+            NUMBER(d) => write!(f, "NUMBER {} {:?}", lexeme, d),
             LeftParen => write!(f, "LEFT_PAREN {} null", lexeme),
             RightParen => write!(f, "RIGHT_PAREN {} null", lexeme),
             LeftBrace => write!(f, "LEFT_BRACE {} null", lexeme),
@@ -49,4 +48,9 @@ impl Display for Token {
             EOF => write!(f, "EOF {} null", lexeme),
         }
     }
+}
+#[test]
+fn tt(){
+    let f = 1f64;
+    println!("{:?}",f)
 }
