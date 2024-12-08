@@ -25,7 +25,7 @@ pub fn my_error(line: usize, message: String) {
 
 fn report(line: usize, r#where: String, message: String) {
     let msg = format!("[line {}] Error{}: {}", line, r#where, message);
-    println!("{}", msg);
+    eprintln!("{}", msg);
     unsafe {
         HAD_ERROR = true;
     };
