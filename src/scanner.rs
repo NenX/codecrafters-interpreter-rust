@@ -226,7 +226,7 @@ impl Scanner {
             let Some(b) = b else {
                 break;
             };
-            if !b.is_ascii_alphanumeric() {
+            if !(b.is_ascii_alphanumeric() || b == b'_') {
                 break;
             }
             self.current += 1;
