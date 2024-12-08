@@ -16,6 +16,7 @@ fn main() {
     match x.cmds {
         Cmd::Tokenize { file } => {
             Lox::run_file(file).expect("run file");
+            println!("EOF  null");
             if unsafe { HAD_ERROR } {
                 process::exit(65)
             }
