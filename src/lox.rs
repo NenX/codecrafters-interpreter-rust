@@ -12,6 +12,7 @@ impl Lox {
     pub fn run_file(path: PathBuf) -> MyResult<()> {
         let r = std::fs::read(path).expect("read file");
         let b = bytes::Bytes::from(r);
+        eprintln!("files data: {:?}", b);
         Self::run(b)
     }
     fn run(b: Bytes) -> MyResult<()> {

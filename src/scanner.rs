@@ -84,9 +84,9 @@ impl Scanner {
             }
             b'/' => {
                 if self.is_match(b'/') {
-                    while !self.is_match(b'\n') && !self.is_at_end() {
-                        self.advance_unchecked();
-                    }
+                    while !self.is_at_end() && self.advance_unchecked() != b'\n' {}
+                    self.line += 1;
+                    self.flush();
                     return Ok(());
                 } else {
                     SLASH
