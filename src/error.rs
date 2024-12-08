@@ -18,17 +18,18 @@ impl Display for MyErrImpl {
     }
 }
 
-fn aa() -> MyResult<()> {
-    Err(std::io::Error::new(std::io::ErrorKind::AddrInUse, "??xx??").into())
+static mut HAD_ERROR: bool = false;
+pub fn my_error(line: usize, message: String) {
+    report(line, "".to_string(), message);
+}
+
+fn report(line: usize, r#where: String, message: String) {
+    let msg = format!("[line {}] Error{}: {}", line, r#where, message);
+    println!("{}", msg);
+    unsafe {
+        HAD_ERROR = true;
+    };
 }
 
 #[test]
-fn tt() {
-    let e = aa();
-    match e {
-        Ok(_) => todo!(),
-        Err(e) => {
-            let em = e.downcast::<MyErrImpl>();
-        }
-    }
-}
+fn tt() {}

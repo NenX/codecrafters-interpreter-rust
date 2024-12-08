@@ -5,7 +5,7 @@ use clap::builder::Str;
 
 use crate::{
     constants::keywords_map,
-    error::{MyErr, MyResult},
+    error::{my_error, MyErr, MyResult},
     token::Token,
     token_type::TokenType,
 };
@@ -23,7 +23,7 @@ impl Scanner {
     pub fn new(source: Bytes) -> Self {
         Self {
             source,
-            line: 0,
+            line: 1,
             start: 0,
             current: 0,
             tokens: vec![],
@@ -94,16 +94,22 @@ impl Scanner {
             }
             b'\n' => {
                 self.line += 1;
+                self.flush();
                 return Ok(());
             }
             b'"' => self.string()?,
 
             _ if [b' ', b'\t', b'\r'].contains(&b) => {
+                self.flush();
                 return Ok(());
             }
             _ if b.is_ascii_digit() => self.number()?,
             _ if b.is_ascii_alphabetic() || b == b'_' => self.identifier()?,
-            _ => todo!(),
+            _ => {
+                let char = String::from_utf8([b].to_vec()).unwrap();
+                my_error(self.line, format!("Unexpected character: {}", char));
+                return Ok(());
+            }
         };
         self.add_token(token_type);
         Ok(())
@@ -128,9 +134,7 @@ impl Scanner {
     fn is_at_end(&self) -> bool {
         self.source.get(self.current).is_none()
     }
-    fn is_digit(c: u8) -> bool {
-        c.is_ascii_digit()
-    }
+
     fn peek(&self) -> Option<u8> {
         self.source.get(self.current).cloned()
     }
@@ -138,11 +142,16 @@ impl Scanner {
         let target_idx = index + self.current;
         self.source.get(target_idx).cloned()
     }
-    fn add_token(&mut self, token_type: TokenType) {
+    fn flush(&mut self) -> Bytes {
         let lexeme = self.source.slice(self.start..self.current);
         self.source.advance(self.current);
         self.current = 0;
         self.start = 0;
+        lexeme
+    }
+    fn add_token(&mut self, token_type: TokenType) {
+        let lexeme = self.flush();
+
         self.tokens.push(Token {
             token_type,
             lexeme,
@@ -194,7 +203,7 @@ impl Scanner {
         }
         let literal = self.source.slice(self.start..self.current);
         let literal = String::from_utf8(literal.to_vec()).unwrap();
-        let n: f64 = literal.parse().unwrap();
+        let n: f64 = literal.parse().expect(&format!("parse f64 {:?}", literal));
         return Ok(NUMBER(n));
     }
     fn identifier(&mut self) -> MyResult<TokenType> {
@@ -221,7 +230,12 @@ impl Scanner {
 
 #[test]
 fn aa() {
-    let src = Bytes::from(r#""abc"123.55var aa"#);
+    let src = Bytes::from(
+        r#"
+    1
+    ,.$(#
+    "#,
+    );
     let mut scanner = Scanner::new(src);
     scanner.scan_tokens().unwrap();
     scanner.print_tokens();
