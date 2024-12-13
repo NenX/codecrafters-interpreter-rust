@@ -51,7 +51,7 @@ impl Parser {
     fn equality(&mut self) -> MyResult<Expr> {
         let mut expr = self.comparision()?;
 
-        while let Some(operator) = self.match_advance_unchecked([SLASH, STAR]) {
+        while let Some(operator) = self.match_advance_unchecked([EqualEqual, BangEqual]) {
             expr = Binary {
                 letf: expr,
                 operator,
