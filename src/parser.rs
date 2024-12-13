@@ -119,7 +119,7 @@ impl Parser {
         let next = self.advance_unchecked();
         let expr = match next.token_type {
             FALSE => Literal::from(false).into(),
-            TRUE => Literal::from(false).into(),
+            TRUE => Literal::from(true).into(),
             NIL => Literal::nil().into(),
             STRING(s) => Literal::from(s.as_str()).into(),
             NUMBER(i) => Literal::from(i).into(),

@@ -24,7 +24,7 @@ impl AstPrinter for Expr {
                 LiteralValue::Bool(b) => format!("{:?}",b),
                 LiteralValue::Number(i) => format!("{:?}",i),
                 LiteralValue::String(s) => s.clone(),
-                LiteralValue::Nil => format!("Nil"),
+                LiteralValue::Nil => format!("nil"),
             },
             Expr::Unary(unary) => self.parenthesize(&unary.operator.lexeme, [&unary.right].to_vec()),
         }
