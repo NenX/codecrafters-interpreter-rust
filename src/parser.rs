@@ -65,7 +65,9 @@ impl Parser {
     fn comparision(&mut self) -> MyResult<Expr> {
         let mut expr = self.term()?;
 
-        while let Some(operator) = self.match_advance_unchecked([SLASH, STAR]) {
+        while let Some(operator) =
+            self.match_advance_unchecked([GREATER, GreaterEqual, LESS, LessEqual])
+        {
             expr = Binary {
                 letf: expr,
                 operator,
