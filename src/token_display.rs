@@ -5,7 +5,7 @@ use TokenType::*;
 
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let lexeme = String::from_utf8(self.lexeme.to_vec()).unwrap();
+        let lexeme = &self.lexeme;
         match &self.token_type {
             IDENTIFIER(s) => write!(f, "IDENTIFIER {} null", lexeme,),
             STRING(s) => write!(f, "STRING {} {}", lexeme, s),
@@ -50,7 +50,7 @@ impl Display for Token {
     }
 }
 #[test]
-fn tt(){
+fn tt() {
     let f = 1f64;
-    println!("{:?}",f)
+    println!("{:?}", f)
 }

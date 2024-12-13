@@ -7,7 +7,7 @@ use clap::builder::Str;
 
 use crate::{
     constants::keywords_map,
-    error::{my_error, unexpected_terminal_err, MyErr, MyResult},
+    error::{my_error, unexpected_terminal_err, MyError, MyResult},
     token::Token,
     token_type::TokenType,
 };
@@ -30,6 +30,9 @@ impl Scanner {
             current: 0,
             tokens: vec![],
         }
+    }
+    pub fn tokens(&self) -> Vec<Token> {
+        self.tokens.clone()
     }
     pub fn print_tokens(&self) {
         for t in &self.tokens {
@@ -59,14 +62,14 @@ impl Scanner {
             b';' => SEMICOLON,
             b'*' => STAR,
             b'!' => {
-                if self.is_match(b'=') {
+                if self.match_advance(b'=') {
                     BangEqual
                 } else {
                     BANG
                 }
             }
             b'=' => {
-                if self.is_match(b'=') {
+                if self.match_advance(b'=') {
                     EqualEqual
                 } else {
                     EQUAL
@@ -74,21 +77,21 @@ impl Scanner {
             }
 
             b'<' => {
-                if self.is_match(b'=') {
+                if self.match_advance(b'=') {
                     LessEqual
                 } else {
                     LESS
                 }
             }
             b'>' => {
-                if self.is_match(b'=') {
+                if self.match_advance(b'=') {
                     GreaterEqual
                 } else {
                     GREATER
                 }
             }
             b'/' => {
-                if self.is_match(b'/') {
+                if self.match_advance(b'/') {
                     while !self.is_at_end() && self.advance_unchecked() != b'\n' {}
                     self.line += 1;
                     self.flush();
@@ -132,7 +135,7 @@ impl Scanner {
         self.current += 1;
         *b
     }
-    fn is_match(&mut self, expected: u8) -> bool {
+    fn match_advance(&mut self, expected: u8) -> bool {
         if self.is_at_end() {
             return false;
         }
@@ -154,12 +157,12 @@ impl Scanner {
         let target_idx = index + self.current;
         self.source.get(target_idx).cloned()
     }
-    fn flush(&mut self) -> Bytes {
+    fn flush(&mut self) -> String {
         let lexeme = self.source.slice(self.start..self.current);
         self.source.advance(self.current);
         self.current = 0;
         self.start = 0;
-        lexeme
+        String::from_utf8(lexeme.to_vec()).unwrap()
     }
     fn add_token(&mut self, token_type: TokenType) {
         let lexeme = self.flush();

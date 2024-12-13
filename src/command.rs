@@ -9,7 +9,6 @@ pub struct ArgsParser {
 #[derive(clap::Subcommand)]
 
 pub enum Cmd {
-    Tokenize{
-        file: PathBuf,
-    },
+    Tokenize { file: PathBuf },
+    Parse { file: PathBuf },
 }
