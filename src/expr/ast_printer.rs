@@ -18,7 +18,7 @@ impl AstPrinter for Expr {
                 self.parenthesize(&opertor.lexeme, [letf, right].to_vec())
             }
             Expr::Grouping(grouping) => self.parenthesize("group", [&grouping.expression].to_vec()),
-            Expr::Literal(literal) => literal.value.to_string(),
+            Expr::Literal(literal) => format!("{:?}", literal.value),
             Expr::Unary(unary) => {
                 self.parenthesize(&unary.operator.lexeme, [&unary.right].to_vec())
             }

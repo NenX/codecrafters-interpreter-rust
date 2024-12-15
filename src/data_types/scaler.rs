@@ -1,11 +1,11 @@
 use std::{
-    fmt::Display,
+    fmt::{Debug, Display},
     ops::{Add, Div, Mul, Neg, Not, Sub},
 };
 
 use super::scaler_op_error::ScalarOpErr;
 
-#[derive(Clone, Debug, PartialEq, PartialOrd)]
+#[derive(Clone,  PartialEq, PartialOrd)]
 pub enum Scalar {
     Bool(bool),
     Number(f64),
@@ -123,6 +123,17 @@ impl Not for Scalar {
 //     }
 // }
 impl Display for Scalar {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Scalar::Bool(b) => format!("{:?}", b),
+            Scalar::Number(i) => format!("{}", i),
+            Scalar::String(s) => s.clone(),
+            Scalar::Nil => format!("nil"),
+        };
+        write!(f, "{}", s)
+    }
+}
+impl Debug for Scalar {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
             Scalar::Bool(b) => format!("{:?}", b),

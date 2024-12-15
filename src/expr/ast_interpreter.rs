@@ -14,7 +14,6 @@ pub trait AstInterpreter {
     fn interpret(&self) -> Scalar {
         let scaler = match self.interpret_checked() {
             Ok(sc) => {
-
                 println!("{}", sc);
                 sc
             }
