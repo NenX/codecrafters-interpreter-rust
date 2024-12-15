@@ -39,7 +39,18 @@ impl AstInterpreter for Expr {
                         left - right
                     }
                     TokenType::PLUS => {
-                        check_number_operands(&left, &right, &operator)?;
+                        if !matches!(
+                            (&left, &right),
+                            (Scalar::String(_), Scalar::String(_))
+                                | (Scalar::Number(_), Scalar::Number(_))
+                        ) {
+                            report_runtime(
+                                operator.line,
+                                format!("Operands must be two numbers or two strings."),
+                            );
+
+                            return MyErr!(;"bad eval");
+                        };
                         left + right
                     }
                     TokenType::SLASH => {
@@ -98,7 +109,7 @@ fn check_number_operands(left: &Scalar, right: &Scalar, operator: &Token) -> MyR
         Ok(())
     } else {
         report_runtime(operator.line, format!("Operands must be numbers."));
-        MyErr!(;"need")
+        MyErr!(;"bad eval")
     }
 }
 fn check_number_operand(right: &Scalar, operator: &Token) -> MyResult<()> {
@@ -106,6 +117,6 @@ fn check_number_operand(right: &Scalar, operator: &Token) -> MyResult<()> {
         Ok(())
     } else {
         report_runtime(operator.line, format!("Operand must be a number."));
-        MyErr!(;"need")
+        MyErr!(;"bad eval")
     }
 }
