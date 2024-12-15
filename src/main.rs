@@ -8,6 +8,7 @@ use clap::Parser;
 use codecrafters_interpreter::command::ArgsParser;
 use codecrafters_interpreter::command::Cmd;
 use codecrafters_interpreter::error::HAD_ERROR;
+use codecrafters_interpreter::error::HAD_RUNTIME_ERROR;
 use codecrafters_interpreter::expr::ast_printer::AstPrinter;
 use codecrafters_interpreter::lox::Lox;
 
@@ -32,5 +33,8 @@ fn main() {
     }
     if unsafe { HAD_ERROR } {
         process::exit(65)
+    }
+    if unsafe { HAD_RUNTIME_ERROR } {
+        process::exit(70)
     }
 }
