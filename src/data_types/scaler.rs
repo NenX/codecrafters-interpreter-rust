@@ -3,9 +3,7 @@ use std::{
     ops::{Add, Div, Mul, Neg, Not, Sub},
 };
 
-use super::scaler_op_error::ScalarOpErr;
-
-#[derive(Clone,  PartialEq, PartialOrd)]
+#[derive(Clone, PartialEq, PartialOrd)]
 pub enum Scalar {
     Bool(bool),
     Number(f64),
@@ -59,14 +57,14 @@ impl Add for Scalar {
     }
 }
 impl Sub for Scalar {
-    type Output = Result<Scalar, ScalarOpErr>;
+    type Output = Scalar;
     fn sub(self, rhs: Self) -> Self::Output {
         if Self::check_number_operands(&self, &rhs) {
             let f1 = self.as_number().unwrap();
             let f2 = rhs.as_number().unwrap();
-            return Ok(Scalar::Number(f1 - f2));
+            return Scalar::Number(f1 - f2);
         }
-        Err(ScalarOpErr::ExpectNumbers)
+        Scalar::Nil
     }
 }
 impl Mul for Scalar {

@@ -36,7 +36,7 @@ impl AstInterpreter for Expr {
                 match operator.token_type {
                     TokenType::MINUS => {
                         check_number_operands(&left, &right, &operator)?;
-                        left + right
+                        left - right
                     }
                     TokenType::PLUS => {
                         check_number_operands(&left, &right, &operator)?;
@@ -44,11 +44,11 @@ impl AstInterpreter for Expr {
                     }
                     TokenType::SLASH => {
                         check_number_operands(&left, &right, &operator)?;
-                        left + right
+                        left / right
                     }
                     TokenType::STAR => {
                         check_number_operands(&left, &right, &operator)?;
-                        left + right
+                        left * right
                     }
 
                     TokenType::BangEqual => {
