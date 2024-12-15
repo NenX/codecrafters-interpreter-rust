@@ -26,6 +26,9 @@ fn main() {
                 Some(s)
             });
         }
+        Cmd::Evaluate { file } => {
+            Lox::evaluate(file);
+        }
     }
     if unsafe { HAD_ERROR } {
         process::exit(65)

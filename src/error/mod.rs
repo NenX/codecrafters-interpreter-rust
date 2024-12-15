@@ -35,6 +35,8 @@ impl Display for MyErrImpl {
 }
 
 pub static mut HAD_ERROR: bool = false;
+pub static mut HAD_RUNTIME_ERROR: bool = false;
+
 pub fn my_error_token(token: Token, message: String) {
     if token.token_type == TokenType::EOF {
         report(token.line, format!(" at end"), message);
@@ -45,6 +47,7 @@ pub fn my_error_token(token: Token, message: String) {
 pub fn my_error(line: usize, message: String) {
     report(line, "".to_string(), message);
 }
+
 pub fn unexpected_terminal_err(line: usize) {
     my_error(line, format!("Unterminated string."));
 }
@@ -54,6 +57,14 @@ fn report(line: usize, r#where: String, message: String) {
     eprintln!("{}", msg);
     unsafe {
         HAD_ERROR = true;
+    };
+}
+pub fn report_runtime(line: usize, message: String) {
+    let msg = format!("{}[line {}] ", message, line,);
+
+    eprintln!("{}", msg);
+    unsafe {
+        HAD_RUNTIME_ERROR = true;
     };
 }
 

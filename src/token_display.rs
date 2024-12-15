@@ -49,8 +49,3 @@ impl Display for Token {
         }
     }
 }
-#[test]
-fn tt() {
-    let f = 1f64;
-    println!("{:?}", f)
-}

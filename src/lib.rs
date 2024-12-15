@@ -4,11 +4,11 @@ pub mod error;
 pub mod lox;
 pub mod scanner;
 pub mod parser;
-pub mod parse_error;
 pub mod expr;
 pub mod token;
 pub mod token_display;
 pub mod token_type;
+pub mod data_types;
 
 trait Visit<T = ()> {
     fn visit_aa(&self, a: &Aa) -> T;

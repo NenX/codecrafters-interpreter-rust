@@ -4,6 +4,7 @@ use literal::Literal;
 use unary::Unary;
 
 pub mod ast_printer;
+pub mod ast_interpreter;
 pub mod binary;
 pub mod grouping;
 pub mod literal;

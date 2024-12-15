@@ -11,4 +11,5 @@ pub struct ArgsParser {
 pub enum Cmd {
     Tokenize { file: PathBuf },
     Parse { file: PathBuf },
+    Evaluate  { file: PathBuf },
 }

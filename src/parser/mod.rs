@@ -1,11 +1,13 @@
+pub mod parse_error;
+
 use crate::{
     error::{my_error_token, MyError, MyResult},
     expr::{self, binary::Binary, grouping::Grouping, literal::Literal, unary::Unary, Expr},
-    parse_error::ParseError,
     token::Token,
     token_type::TokenType,
     MyErr,
 };
+use parse_error::ParseError;
 use TokenType::*;
 /*
 expression -> equality

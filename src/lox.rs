@@ -3,8 +3,9 @@ use std::{error::Error, path::PathBuf};
 use bytes::Bytes;
 
 use crate::{
+    data_types::scaler::Scalar,
     error::{MyErrImpl, MyResult},
-    expr::Expr,
+    expr::{self, ast_interpreter::AstInterpreter, Expr},
     parser::Parser,
     scanner::Scanner,
     token::Token,
@@ -20,6 +21,13 @@ impl Lox {
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         parser.parse()
+    }
+    pub fn evaluate(path: PathBuf) {
+        let expr = Self::parse(path);
+        match expr {
+            Some(expr) => expr.interpret(),
+            None => todo!(),
+        };
     }
     pub fn tokenize(path: PathBuf) -> Scanner {
         let b = Self::read(path);
