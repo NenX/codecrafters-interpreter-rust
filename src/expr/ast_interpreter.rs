@@ -63,11 +63,11 @@ impl AstInterpreter for Expr {
                     }
 
                     TokenType::BangEqual => {
-                        check_number_operands(&left, &right, operator)?;
+                        // check_number_operands(&left, &right, operator)?;
                         Scalar::Bool(left != right)
                     }
                     TokenType::EqualEqual => {
-                        check_number_operands(&left, &right, operator)?;
+                        // check_number_operands(&left, &right, operator)?;
                         Scalar::Bool(left == right)
                     }
                     TokenType::GREATER => {
