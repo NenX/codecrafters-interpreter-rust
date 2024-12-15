@@ -106,8 +106,8 @@ impl Not for Scalar {
     fn not(self) -> Self::Output {
         match self {
             Scalar::Bool(b) => Scalar::Bool(!b),
-            Scalar::Number(_) => Scalar::Bool(true),
-            Scalar::String(_) => Scalar::Bool(true),
+            Scalar::Number(_) => Scalar::Bool(false),
+            Scalar::String(_) => Scalar::Bool(false),
             Scalar::Nil => Scalar::Bool(true),
         }
     }

@@ -81,8 +81,8 @@ impl AstInterpreter for Expr {
             Expr::Grouping(grouping) => grouping.expression.interpret_checked()?,
             Expr::Literal(literal) => literal.value.clone(),
             Expr::Unary(unary) => match unary.operator.token_type {
-                TokenType::LeftParen => !unary.right.interpret_checked()?,
-                TokenType::BANG => {
+                TokenType::BANG => !unary.right.interpret_checked()?,
+                TokenType::MINUS => {
                     let right = unary.right.interpret_checked()?;
                     check_number_operand(&right, &unary.operator)?;
                     -unary.right.interpret_checked()?
