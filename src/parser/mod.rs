@@ -160,7 +160,7 @@ impl Parser {
                 Expr::Variable(variable_expr) => {
                     return Ok(AssignExpr {
                         name: variable_expr.name,
-                        value: self.expression()?,
+                        value: self.assignment()?,
                     }
                     .into())
                 }
