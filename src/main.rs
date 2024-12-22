@@ -27,7 +27,7 @@ fn main() {
             Lox::evaluate(file);
         }
         Cmd::Run { file } => {
-            Lox::run_file(file);
+           let res =  Lox::run_file(file);
 
         }
     }

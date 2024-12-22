@@ -13,14 +13,10 @@ use crate::{
 use super::AstInterpreter;
 
 impl AstInterpreter for Stmt {
-    type Output = ();
+    type Output = MyResult<()>;
 
     fn interpret(&self, env: &mut Environment) -> Self::Output {
-        let scaler = match self.interpret_checked(env) {
-            Ok(sc) => sc,
-            Err(e) => (),
-        };
-        ()
+        self.interpret_checked(env)
     }
 }
 impl Stmt {
@@ -38,7 +34,7 @@ impl Stmt {
                 }
             }
             Stmt::Expression(expression_stmt) => {
-                expression_stmt.expression.interpret(env);
+                expression_stmt.expression.interpret(env)?;
             }
             Stmt::Block(block_stmt) => {
                 for i in &block_stmt.statements {

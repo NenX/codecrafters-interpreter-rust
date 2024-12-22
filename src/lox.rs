@@ -4,17 +4,21 @@ use bytes::Bytes;
 
 use crate::{
     ast_interpreter::AstInterpreter, data_types::scaler::Scalar, environment::Environment,
-    expr::Expr, parser::Parser, scanner::Scanner, stmt::Stmt,
+    error::MyResult, expr::Expr, parser::Parser, scanner::Scanner, stmt::Stmt,
 };
 pub struct Lox {}
 impl Lox {
-    pub fn run_file(path: PathBuf) {
+    pub fn run_file(path: PathBuf) -> MyResult<()> {
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         let stmts = parser.parse();
         let mut env = Environment::new(None);
 
-        stmts.iter().for_each(|stmt| stmt.interpret(&mut env));
+        // stmts.iter().for_each(|stmt| stmt.interpret(&mut env));
+        for stmt in stmts {
+            stmt.interpret(&mut env)?;
+        }
+        Ok(())
     }
     pub fn parse(path: PathBuf) -> Option<Expr> {
         let scanner = Self::tokenize(path);

@@ -11,9 +11,13 @@
             "program": "${workspaceFolder}/target/debug/codecrafters-interpreter",
             // "args": ["tokenize","test.lox"],
             // "args": ["parse","test.lox"],
+            // "args": [
+            //     "evaluate",
+            //     "eval.lox"
+            // ],
             "args": [
-                "evaluate",
-                "eval.lox"
+                "run",
+                "test.lox"
             ],
             "stopAtEntry": false,
             "preLaunchTask": "rust: cargo build",
