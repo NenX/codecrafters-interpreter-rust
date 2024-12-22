@@ -3,8 +3,8 @@ pub mod parse_error;
 use crate::{
     error::{my_error_token, MyError, MyResult},
     expr::{
-        self, binary::BinaryExpr, grouping::GroupingExpr, literal::LiteralExpr, unary::UnaryExpr,
-        variable::VariableExpr, Expr,
+        self, assign::AssignExpr, binary::BinaryExpr, grouping::GroupingExpr, literal::LiteralExpr,
+        unary::UnaryExpr, variable::VariableExpr, Expr,
     },
     stmt::{block::BlockStmt, expression::ExpressionStmt, print::PrintStmt, var::VarStmt, Stmt},
     token::Token,
@@ -150,7 +150,27 @@ impl Parser {
         Ok(ExpressionStmt { expression }.into())
     }
     fn expression(&mut self) -> MyResult<Expr> {
-        self.equality()
+        self.assignment()
+    }
+    fn assignment(&mut self) -> MyResult<Expr> {
+        let expr = self.equality()?;
+        let next = self.peek_unchecked();
+        if next.is_same_type(&EQUAL) {
+            match expr {
+                Expr::Variable(variable_expr) => {
+                    return Ok(AssignExpr {
+                        name: variable_expr.name,
+                        value: self.expression()?,
+                    }
+                    .into())
+                }
+                _ => {
+                    return MyErr!(,ParseError::NotExpected(next, format!("Invalid assignment target.")))
+                }
+            }
+        }
+
+        Ok(expr)
     }
     fn equality(&mut self) -> MyResult<Expr> {
         let mut expr = self.comparision()?;
