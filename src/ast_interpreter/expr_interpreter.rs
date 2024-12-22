@@ -1,6 +1,6 @@
 use crate::{
     data_types::scaler::Scalar,
-    environment::Environment,
+    environment::{Environment, EnvironmentType},
     error::{report_runtime, MyResult},
     expr::{binary::BinaryExpr, Expr},
     token::Token,
@@ -13,7 +13,7 @@ use super::AstInterpreter;
 impl AstInterpreter for Expr {
     type Output = MyResult<Scalar>;
 
-    fn interpret(&self, env: &mut Environment) -> Self::Output {
+    fn interpret(&self, env: EnvironmentType) -> Self::Output {
         self.interpret_checked(env)
     }
     // fn interpret(&self, env: &mut Environment) -> Self::Output {
@@ -27,7 +27,7 @@ impl AstInterpreter for Expr {
     // }
 }
 impl Expr {
-    fn interpret_checked(&self, env: &mut Environment) -> MyResult<Scalar> {
+    fn interpret_checked(&self, env: EnvironmentType) -> MyResult<Scalar> {
         let value = match self {
             Expr::Binary(binary) => {
                 let BinaryExpr {
@@ -35,7 +35,7 @@ impl Expr {
                     right,
                     operator,
                 } = binary.as_ref();
-                let left = letf.interpret_checked(env)?;
+                let left = letf.interpret_checked(env.clone())?;
                 let right = right.interpret_checked(env)?;
                 match operator.t_type {
                     TokenType::MINUS => {
@@ -96,16 +96,16 @@ impl Expr {
             Expr::Grouping(grouping) => grouping.expression.interpret_checked(env)?,
             Expr::Literal(literal) => literal.value.clone(),
             Expr::Unary(unary) => match unary.operator.t_type {
-                TokenType::BANG => !unary.right.interpret_checked(env)?,
+                TokenType::BANG => !unary.right.interpret_checked(env.clone())?,
                 TokenType::MINUS => {
-                    let right = unary.right.interpret_checked(env)?;
+                    let right = unary.right.interpret_checked(env.clone())?;
                     check_number_operand(&right, &unary.operator)?;
                     -unary.right.interpret_checked(env)?
                 }
                 _ => Scalar::Nil,
             },
             Expr::Variable(variable) => {
-                let value = env.get(&variable.name.lexeme);
+                let value = env.borrow().get(&variable.name.lexeme);
                 match value {
                     Ok(value) => value.clone(),
                     Err(_) => {
@@ -118,8 +118,10 @@ impl Expr {
                 }
             }
             Expr::Assign(assign) => {
-                let v = assign.value.interpret_checked(env)?;
-                let value = env.assign(assign.name.lexeme.clone(), v.clone());
+                let v = assign.value.interpret_checked(env.clone())?;
+                let value = env
+                    .borrow_mut()
+                    .assign(assign.name.lexeme.clone(), v.clone());
                 match value {
                     Ok(_) => v,
                     Err(_) => {

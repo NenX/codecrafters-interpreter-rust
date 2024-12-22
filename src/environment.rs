@@ -1,18 +1,21 @@
-use std::{collections::HashMap, error::Error, fmt::Display, sync::LazyLock};
+use std::{
+    cell::RefCell, collections::HashMap, error::Error, fmt::Display, rc::Rc, sync::LazyLock,
+};
 
 use crate::data_types::scaler::Scalar;
-pub static mut GLOBAL_ENV: LazyLock<Environment> = LazyLock::new(|| Environment::new(None));
 
-pub struct Environment<'a> {
-    enclosing: Option<&'a Environment<'a>>,
+pub struct Environment {
+    enclosing: Option<EnvironmentType>,
     values: HashMap<String, Scalar>,
 }
-impl<'a> Environment<'a> {
-    pub fn new(enclosing: Option<&'a Environment>) -> Self {
-        Self {
-            enclosing: enclosing.map(|e| e.into()),
+pub type EnvironmentType = Rc<RefCell<Environment>>;
+
+impl Environment {
+    pub fn new(enclosing: Option<EnvironmentType>) -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(Self {
+            enclosing,
             values: HashMap::new(),
-        }
+        }))
     }
     pub fn define(&mut self, name: String, value: Option<Scalar>) {
         self.values.insert(name, value.unwrap_or(Scalar::Nil));
@@ -20,17 +23,19 @@ impl<'a> Environment<'a> {
     pub fn assign(&mut self, name: String, value: Scalar) -> Result<(), EnvironmentErr> {
         if self.values.contains_key(&name) {
             self.values.insert(name, value);
-            Ok(())
-        } else {
-            Err(EnvironmentErr::AssignUndefined)
-        }
-    }
-    pub fn get(&self, name: &String) -> Result<&Scalar, EnvironmentErr> {
-        if self.values.contains_key(name) {
-            return Ok(self.values.get(name).unwrap());
+            return Ok(());
         }
         match &self.enclosing {
-            Some(parent) => parent.get(name),
+            Some(parent) => parent.borrow_mut().assign(name, value),
+            None => Err(EnvironmentErr::AccessUndefined),
+        }
+    }
+    pub fn get(&self, name: &String) -> Result<Scalar, EnvironmentErr> {
+        if self.values.contains_key(name) {
+            return Ok(self.values.get(name).unwrap().clone());
+        }
+        match &self.enclosing {
+            Some(parent) => parent.borrow().get(name),
             None => Err(EnvironmentErr::AccessUndefined),
         }
     }

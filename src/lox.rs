@@ -12,9 +12,9 @@ impl Lox {
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         let stmts = parser.parse();
-        let mut env = Environment::new(None);
+        let env = Environment::new(None);
         for stmt in stmts {
-            stmt.interpret(&mut env)?;
+            stmt.interpret(env.clone())?;
         }
         Ok(())
     }
@@ -24,13 +24,13 @@ impl Lox {
         parser.parse_expression()
     }
     pub fn evaluate(path: PathBuf) {
-        let mut env = Environment::new(None);
+        let env = Environment::new(None);
 
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         let expr = parser.parse_expression();
         if let Some(expr) = expr {
-            let result = expr.interpret(&mut env);
+            let result = expr.interpret(env);
             if let Ok(sc) = result {
                 println!("{}", sc)
             }

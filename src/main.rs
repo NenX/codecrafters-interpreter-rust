@@ -1,4 +1,7 @@
+use std::cell::Ref;
+use std::cell::RefCell;
 use std::process;
+use std::rc::Rc;
 
 use clap::Parser;
 use codecrafters_interpreter::ast_printer::AstPrinter;
@@ -27,8 +30,7 @@ fn main() {
             Lox::evaluate(file);
         }
         Cmd::Run { file } => {
-           let res =  Lox::run_file(file);
-
+            let res = Lox::run_file(file);
         }
     }
     if unsafe { HAD_ERROR } {
@@ -37,4 +39,16 @@ fn main() {
     if unsafe { HAD_RUNTIME_ERROR } {
         process::exit(70)
     }
+}
+
+struct A {
+    pub age: i32,
+}
+#[test]
+fn aa() {
+    let a = Rc::new(RefCell::new(A { age: 12 }));
+    let b = a.clone();
+    let c = a.clone();
+    c.borrow_mut().age = 33;
+    println!("a {}",a.borrow().age)
 }

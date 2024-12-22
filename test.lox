@@ -1,8 +1,13 @@
 {
-    var world = "before";
+    var world = "outer world";
+    var bar = "outer bar";
     {
-        var world = "after";
+        world = "modified world";
+        var bar = "inner bar";
         print world;
+        print bar;
     }
     print world;
+    print bar;
 }
+print bar;
