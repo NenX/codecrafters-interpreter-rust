@@ -1,5 +1,8 @@
-var quz;
-quz = 1;
-// print quz;
-// print quz = 2;
-// print quz;
+{
+    var world = "before";
+    {
+        var world = "after";
+        print world;
+    }
+    print world;
+}

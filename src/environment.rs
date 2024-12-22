@@ -3,12 +3,12 @@ use std::{collections::HashMap, error::Error, fmt::Display, sync::LazyLock};
 use crate::data_types::scaler::Scalar;
 pub static mut GLOBAL_ENV: LazyLock<Environment> = LazyLock::new(|| Environment::new(None));
 
-pub struct Environment {
-    enclosing: Option<Box<Environment>>,
+pub struct Environment<'a> {
+    enclosing: Option<&'a Environment<'a>>,
     values: HashMap<String, Scalar>,
 }
-impl Environment {
-    pub fn new(enclosing: Option<Environment>) -> Self {
+impl<'a> Environment<'a> {
+    pub fn new(enclosing: Option<&'a Environment>) -> Self {
         Self {
             enclosing: enclosing.map(|e| e.into()),
             values: HashMap::new(),

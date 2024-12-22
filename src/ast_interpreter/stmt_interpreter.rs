@@ -30,15 +30,15 @@ impl Stmt {
                     env.define(name, Some(value));
                 } else {
                     env.define(name, None);
-
                 }
             }
             Stmt::Expression(expression_stmt) => {
                 expression_stmt.expression.interpret(env)?;
             }
             Stmt::Block(block_stmt) => {
+                let mut env = Environment::new(Some(env));
                 for i in &block_stmt.statements {
-                    i.interpret_checked(env)?
+                    i.interpret_checked(&mut env)?
                 }
             }
             Stmt::Print(print_stmt) => {

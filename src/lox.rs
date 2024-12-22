@@ -13,8 +13,6 @@ impl Lox {
         let mut parser = Parser::new(scanner.tokens());
         let stmts = parser.parse();
         let mut env = Environment::new(None);
-
-        // stmts.iter().for_each(|stmt| stmt.interpret(&mut env));
         for stmt in stmts {
             stmt.interpret(&mut env)?;
         }
