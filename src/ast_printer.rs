@@ -1,6 +1,4 @@
-use crate::{data_types::scaler::Scalar, expr::binary::Binary};
-
-use super::Expr;
+use crate::expr::{binary::BinaryExpr, Expr};
 
 pub trait AstPrinter {
     fn print(&self) -> String;
@@ -10,7 +8,7 @@ impl AstPrinter for Expr {
     fn print(&self) -> String {
         match self {
             Expr::Binary(binary) => {
-                let Binary {
+                let BinaryExpr {
                     letf,
                     right,
                     operator: opertor,
@@ -18,10 +16,12 @@ impl AstPrinter for Expr {
                 self.parenthesize(&opertor.lexeme, [letf, right].to_vec())
             }
             Expr::Grouping(grouping) => self.parenthesize("group", [&grouping.expression].to_vec()),
-            Expr::Literal(literal) => format!("{:?}", literal.value),
+            Expr::Literal(literal) => format!("{}", literal.value),
             Expr::Unary(unary) => {
                 self.parenthesize(&unary.operator.lexeme, [&unary.right].to_vec())
             }
+            Expr::Variable(variable) => todo!(),
+            Expr::Assign(assign) => todo!(),
         }
     }
 

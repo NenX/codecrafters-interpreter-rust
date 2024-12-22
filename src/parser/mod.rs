@@ -2,15 +2,27 @@ pub mod parse_error;
 
 use crate::{
     error::{my_error_token, MyError, MyResult},
-    expr::{self, binary::Binary, grouping::Grouping, literal::Literal, unary::Unary, Expr},
+    expr::{
+        self, binary::BinaryExpr, grouping::GroupingExpr, literal::LiteralExpr, unary::UnaryExpr,
+        variable::VariableExpr, Expr,
+    },
+    stmt::{block::BlockStmt, expression::ExpressionStmt, print::PrintStmt, var::VarStmt, Stmt},
     token::Token,
-    token_type::TokenType,
+    token_type::{CmpTokenType, TokenType},
     MyErr,
 };
 use parse_error::ParseError;
 use TokenType::*;
 /*
-expression -> equality
+program        → declaration* EOF
+declaration    → varDecl | statement
+varDecl        → "var" IDENTIFIER ( "=" expression )? ";"
+statement      → exprStmt | printStmt | block
+block          → "{" declaration* "}"
+exprStmt       → expression ";"
+printStmt      → "print" expression ";"
+expression     → assignment
+assignment     → IDENTIFIER "=" assignment | equality ;
 equality -> comparision ( ( "!=" | "==" ) comparision )*
 comparision -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
 term -> factor ( ( "+" | "-" ) factor )*
@@ -31,10 +43,34 @@ impl Parser {
             current: 0,
         }
     }
-    pub fn parse(&mut self) -> Option<Expr> {
-        let res = self.expression();
-        match res {
-            Ok(expr) => Some(expr),
+    pub fn parse(&mut self) -> Vec<Stmt> {
+        let mut v = vec![];
+        while !self.is_at_end() {
+            let stmt = self.declaration_checked();
+            if let Some(stmt) = stmt {
+                v.push(stmt);
+            }
+        }
+        v
+    }
+    fn synchronize(&mut self) {
+        self.advance_unchecked();
+
+        while !self.is_at_end() {
+            let next = self.peek_unchecked();
+            if [WHILE, CLASS, FUN, FOR, IF, PRINT, RETURN, VAR].contains(&next.t_type) {
+                return;
+            }
+            if [SEMICOLON].contains(&next.t_type) {
+                self.advance_unchecked();
+                return;
+            }
+            self.advance_unchecked();
+        }
+    }
+    fn declaration_checked(&mut self) -> Option<Stmt> {
+        match self.declaration() {
+            Ok(stmt) => Some(stmt),
             Err(e) => {
                 if let Ok(e) = e.downcast::<ParseError>() {
                     match e {
@@ -43,9 +79,59 @@ impl Parser {
                         }
                     }
                 }
-                return None;
+                self.synchronize();
+                None
             }
         }
+    }
+    fn declaration(&mut self) -> MyResult<Stmt> {
+        if self.match_advance_unchecked([VAR]).is_some() {
+            return self.var_declaration();
+        };
+        self.statement()
+    }
+    fn var_declaration(&mut self) -> MyResult<Stmt> {
+        let name = self.consume(IDENTIFIER(format!("")), "")?;
+        let mut initializer = None;
+        if let Some(_) = self.match_advance_unchecked([EQUAL]) {
+            let next = self.expression()?;
+
+            initializer = Some(next)
+        }
+        self.consume(SEMICOLON, "Var Stmt Expect '}' after block.")?;
+
+        Ok(VarStmt { name, initializer }.into())
+    }
+    fn statement(&mut self) -> MyResult<Stmt> {
+        if self.match_advance_unchecked([PRINT]).is_some() {
+            return self.print_stmt();
+        }
+        if self.match_advance_unchecked([LeftBrace]).is_some() {
+            return self.block_stmt();
+        }
+        self.expression_stmt()
+    }
+    fn block_stmt(&mut self) -> MyResult<Stmt> {
+        let mut statements = vec![];
+        loop {
+            if self.check_unchecked([&EOF, &RightBrace]) {
+                break;
+            }
+            let stmt = self.declaration()?;
+            statements.push(stmt);
+        }
+        self.consume(RightBrace, "Block Stmt Expect '}' after block.")?;
+        Ok(BlockStmt { statements }.into())
+    }
+    fn print_stmt(&mut self) -> MyResult<Stmt> {
+        let expression = self.expression()?;
+        self.consume(SEMICOLON, "Print Stmt Expect ';' after expression.")?;
+        Ok(PrintStmt { expression }.into())
+    }
+    fn expression_stmt(&mut self) -> MyResult<Stmt> {
+        let expression = self.expression()?;
+        self.consume(SEMICOLON, "Expression Stmt Expect ';' after expression.")?;
+        Ok(ExpressionStmt { expression }.into())
     }
     fn expression(&mut self) -> MyResult<Expr> {
         self.equality()
@@ -54,7 +140,7 @@ impl Parser {
         let mut expr = self.comparision()?;
 
         while let Some(operator) = self.match_advance_unchecked([EqualEqual, BangEqual]) {
-            expr = Binary {
+            expr = BinaryExpr {
                 letf: expr,
                 operator,
                 right: self.comparision()?,
@@ -70,7 +156,7 @@ impl Parser {
         while let Some(operator) =
             self.match_advance_unchecked([GREATER, GreaterEqual, LESS, LessEqual])
         {
-            expr = Binary {
+            expr = BinaryExpr {
                 letf: expr,
                 operator,
                 right: self.term()?,
@@ -84,12 +170,13 @@ impl Parser {
         let mut expr = self.factor()?;
 
         while let Some(operator) = self.match_advance_unchecked([PLUS, MINUS]) {
-            expr = Binary {
+            expr = BinaryExpr {
                 letf: expr,
                 operator,
                 right: self.factor()?,
             }
             .into();
+            // println!("expr {:?}", expr)
         }
 
         Ok(expr)
@@ -98,7 +185,7 @@ impl Parser {
         let mut expr = self.unary()?;
 
         while let Some(operator) = self.match_advance_unchecked([SLASH, STAR]) {
-            expr = Binary {
+            expr = BinaryExpr {
                 letf: expr,
                 operator,
                 right: self.unary()?,
@@ -111,7 +198,7 @@ impl Parser {
 
     fn unary(&mut self) -> MyResult<Expr> {
         if let Some(operator) = self.match_advance_unchecked([BANG, MINUS]) {
-            return Ok(Unary {
+            return Ok(UnaryExpr {
                 operator,
                 right: self.unary()?,
             }
@@ -121,18 +208,18 @@ impl Parser {
     }
     fn primary(&mut self) -> MyResult<Expr> {
         let next = self.advance_unchecked();
-        let expr = match next.token_type {
-            FALSE => Literal::from(false).into(),
-            TRUE => Literal::from(true).into(),
-            NIL => Literal::nil().into(),
-            STRING(s) => Literal::from(s.as_str()).into(),
-            NUMBER(i) => Literal::from(i).into(),
+        let expr = match next.t_type {
+            FALSE => LiteralExpr::from(false).into(),
+            TRUE => LiteralExpr::from(true).into(),
+            NIL => LiteralExpr::nil().into(),
+            STRING(s) => LiteralExpr::from(s.as_str()).into(),
+            NUMBER(i) => LiteralExpr::from(i).into(),
             LeftParen => {
                 let expr = self.expression()?;
                 self.consume(RightParen, "Expect ')' after expression.")?;
-                Grouping::from(expr).into()
+                GroupingExpr::from(expr).into()
             }
-            // IDENTIFIER(_) => todo!(),
+            IDENTIFIER(_) => VariableExpr { name: next }.into(),
             _ => return MyErr!(,ParseError::NotExpected(next, format!("Expect expression."))),
         };
         Ok(expr)
@@ -141,7 +228,7 @@ impl Parser {
         if self.current >= self.end {
             return true;
         }
-        self.peek_unchecked().token_type == EOF
+        self.peek_unchecked().t_type == EOF
     }
     pub fn peek_unchecked(&self) -> Token {
         self.tokens.get(self.current).expect("peek token").clone()
@@ -151,16 +238,16 @@ impl Parser {
         self.current += 1;
         next
     }
-    pub fn check_unchecked(&self, targets: impl IntoIterator<Item = TokenType>) -> bool {
+    pub fn check_unchecked<'a>(&self, targets: impl IntoIterator<Item = &'a TokenType>) -> bool {
         let next = &self.peek_unchecked();
-        targets.into_iter().any(|t| next.token_type == t)
+        targets.into_iter().any(|t| next.is_same_type(t))
     }
     pub fn match_advance_unchecked(
         &mut self,
         targets: impl IntoIterator<Item = TokenType>,
     ) -> Option<Token> {
         let next = self.peek_unchecked();
-        let is_match = targets.into_iter().any(|t| next.token_type == t);
+        let is_match = targets.into_iter().any(|t| next.is_same_type(&t));
         if is_match {
             self.current += 1;
             Some(next)
@@ -169,10 +256,14 @@ impl Parser {
         }
     }
     fn consume(&mut self, token: TokenType, message: &str) -> MyResult<Token> {
-        if self.check_unchecked([token]) {
+        if self.check_unchecked([&token]) {
             return Ok(self.advance_unchecked());
         };
-
+        eprintln!(
+            "expect {:?} but received {:?}",
+            &token,
+            self.peek_unchecked()
+        );
         MyErr!(,ParseError::NotExpected(self.peek_unchecked(), message.to_string()))
     }
 }

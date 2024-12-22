@@ -38,7 +38,7 @@ pub static mut HAD_ERROR: bool = false;
 pub static mut HAD_RUNTIME_ERROR: bool = false;
 
 pub fn my_error_token(token: Token, message: String) {
-    if token.token_type == TokenType::EOF {
+    if token.t_type == TokenType::EOF {
         report(token.line, format!(" at end"), message);
     } else {
         report(token.line, format!(" at '{}'", token.lexeme), message);

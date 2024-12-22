@@ -48,3 +48,12 @@ pub enum TokenType {
 
     EOF,
 }
+
+impl CmpTokenType<TokenType> for TokenType {
+    fn is_same_type(&self, right: &TokenType) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(right)
+    }
+}
+pub trait CmpTokenType<T> {
+    fn is_same_type(&self, right: &T) -> bool;
+}

@@ -12,4 +12,5 @@ pub enum Cmd {
     Tokenize { file: PathBuf },
     Parse { file: PathBuf },
     Evaluate  { file: PathBuf },
+    Run  { file: PathBuf },
 }

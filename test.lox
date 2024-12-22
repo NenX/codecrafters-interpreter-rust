@@ -1,2 +1,7 @@
 // "hello"!="foo"
--"hello world!"
+// -22;
+// var qq=33;
+// var aa= "aa" + "bb";
+var gg = "a" + "c";
+print "==" +gg +"=?=" ;
+// print "a" + "c";

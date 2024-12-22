@@ -168,7 +168,7 @@ impl Scanner {
         let lexeme = self.flush();
 
         self.tokens.push(Token {
-            token_type,
+            t_type: token_type,
             lexeme,
             line: self.line,
         });

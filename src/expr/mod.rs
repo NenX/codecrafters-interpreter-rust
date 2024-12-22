@@ -1,39 +1,53 @@
-use binary::Binary;
-use grouping::Grouping;
-use literal::Literal;
-use unary::Unary;
+use assign::AssignExpr;
+use binary::BinaryExpr;
+use grouping::GroupingExpr;
+use literal::LiteralExpr;
+use unary::UnaryExpr;
+use variable::VariableExpr;
 
-pub mod ast_printer;
-pub mod ast_interpreter;
+pub mod assign;
 pub mod binary;
 pub mod grouping;
 pub mod literal;
 pub mod unary;
+pub mod variable;
 
 #[derive(Clone, Debug)]
 pub enum Expr {
-    Binary(Box<Binary>),
-    Grouping(Box<Grouping>),
-    Literal(Box<Literal>),
-    Unary(Box<Unary>),
+    Variable(Box<VariableExpr>),
+    Assign(Box<AssignExpr>),
+    Binary(Box<BinaryExpr>),
+    Grouping(Box<GroupingExpr>),
+    Literal(Box<LiteralExpr>),
+    Unary(Box<UnaryExpr>),
 }
-impl From<Binary> for Expr {
-    fn from(value: Binary) -> Self {
+impl From<BinaryExpr> for Expr {
+    fn from(value: BinaryExpr) -> Self {
         Self::Binary(value.into())
     }
 }
-impl From<Grouping> for Expr {
-    fn from(value: Grouping) -> Self {
+impl From<GroupingExpr> for Expr {
+    fn from(value: GroupingExpr) -> Self {
         Self::Grouping(value.into())
     }
 }
-impl From<Literal> for Expr {
-    fn from(value: Literal) -> Self {
+impl From<LiteralExpr> for Expr {
+    fn from(value: LiteralExpr) -> Self {
         Self::Literal(value.into())
     }
 }
-impl From<Unary> for Expr {
-    fn from(value: Unary) -> Self {
+impl From<UnaryExpr> for Expr {
+    fn from(value: UnaryExpr) -> Self {
         Self::Unary(value.into())
+    }
+}
+impl From<VariableExpr> for Expr {
+    fn from(value: VariableExpr) -> Self {
+        Self::Variable(value.into())
+    }
+}
+impl From<AssignExpr> for Expr {
+    fn from(value: AssignExpr) -> Self {
+        Self::Assign(value.into())
     }
 }

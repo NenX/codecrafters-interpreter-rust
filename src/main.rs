@@ -1,15 +1,11 @@
-use std::env;
-use std::fs;
-use std::io::{self, Write};
 use std::process;
 
-use bytes::Bytes;
 use clap::Parser;
+use codecrafters_interpreter::ast_printer::AstPrinter;
 use codecrafters_interpreter::command::ArgsParser;
 use codecrafters_interpreter::command::Cmd;
 use codecrafters_interpreter::error::HAD_ERROR;
 use codecrafters_interpreter::error::HAD_RUNTIME_ERROR;
-use codecrafters_interpreter::expr::ast_printer::AstPrinter;
 use codecrafters_interpreter::lox::Lox;
 
 fn main() {
@@ -21,14 +17,19 @@ fn main() {
         Cmd::Parse { file } => {
             let opt = Lox::parse(file);
 
-            opt.and_then(|expr| {
-                let s = expr.print();
-                println!("{}", s);
-                Some(s)
-            });
+            // opt.and_then(|expr| {
+            //     let s = expr.print();
+            //     println!("{}", s);
+            //     Some(s)
+            // });
         }
         Cmd::Evaluate { file } => {
             Lox::evaluate(file);
+        }
+        Cmd::Run { file } => {
+            // Lox::run_file(file);
+            Lox::evaluate(file);
+
         }
     }
     if unsafe { HAD_ERROR } {

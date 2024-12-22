@@ -1,20 +1,21 @@
 use crate::{
     data_types::scaler::Scalar,
+    environment::Environment,
     error::{report_runtime, MyResult},
-    expr::binary::Binary,
+    expr::{binary::BinaryExpr, Expr},
     token::Token,
     token_type::TokenType,
     MyErr,
 };
 
-use super::Expr;
+use super::AstInterpreter;
 
-pub trait AstInterpreter {
-    fn interpret_checked(&self) -> MyResult<Scalar>;
-    fn interpret(&self) -> Scalar {
-        let scaler = match self.interpret_checked() {
+impl AstInterpreter for Expr {
+    type Output = Scalar;
+
+    fn interpret(&self, env: &mut Environment) -> Self::Output {
+        let scaler = match self.interpret_checked(env) {
             Ok(sc) => {
-                println!("{}", sc);
                 sc
             }
             Err(e) => Scalar::Nil,
@@ -22,18 +23,18 @@ pub trait AstInterpreter {
         scaler
     }
 }
-impl AstInterpreter for Expr {
-    fn interpret_checked(&self) -> MyResult<Scalar> {
+impl Expr {
+    fn interpret_checked(&self, env: &mut Environment) -> MyResult<Scalar> {
         let value = match self {
             Expr::Binary(binary) => {
-                let Binary {
+                let BinaryExpr {
                     letf,
                     right,
                     operator,
                 } = binary.as_ref();
-                let left = letf.interpret_checked()?;
-                let right = right.interpret_checked()?;
-                match operator.token_type {
+                let left = letf.interpret_checked(env)?;
+                let right = right.interpret_checked(env)?;
+                match operator.t_type {
                     TokenType::MINUS => {
                         check_number_operands(&left, &right, &operator)?;
                         left - right
@@ -89,17 +90,44 @@ impl AstInterpreter for Expr {
                     _ => Scalar::Nil,
                 }
             }
-            Expr::Grouping(grouping) => grouping.expression.interpret_checked()?,
+            Expr::Grouping(grouping) => grouping.expression.interpret_checked(env)?,
             Expr::Literal(literal) => literal.value.clone(),
-            Expr::Unary(unary) => match unary.operator.token_type {
-                TokenType::BANG => !unary.right.interpret_checked()?,
+            Expr::Unary(unary) => match unary.operator.t_type {
+                TokenType::BANG => !unary.right.interpret_checked(env)?,
                 TokenType::MINUS => {
-                    let right = unary.right.interpret_checked()?;
+                    let right = unary.right.interpret_checked(env)?;
                     check_number_operand(&right, &unary.operator)?;
-                    -unary.right.interpret_checked()?
+                    -unary.right.interpret_checked(env)?
                 }
                 _ => Scalar::Nil,
             },
+            Expr::Variable(variable) => {
+                let value = env.get(&variable.name.lexeme);
+                match value {
+                    Ok(value) => value.clone(),
+                    Err(_) => {
+                        report_runtime(
+                            variable.name.line,
+                            format!("Undefined variable '{}'.", variable.name.lexeme),
+                        );
+                        return MyErr!(;"bad variable access");
+                    }
+                }
+            }
+            Expr::Assign(assign) => {
+                let v = assign.value.interpret_checked(env)?;
+                let value = env.assign(assign.name.lexeme.clone(), v.clone());
+                match value {
+                    Ok(_) => v,
+                    Err(_) => {
+                        report_runtime(
+                            assign.name.line,
+                            format!("Undefined variable '{}'.", assign.name.lexeme),
+                        );
+                        return MyErr!(;"bad variable assign");
+                    }
+                }
+            }
         };
         Ok(value)
     }

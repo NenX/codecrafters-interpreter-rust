@@ -5,10 +5,14 @@ pub mod lox;
 pub mod scanner;
 pub mod parser;
 pub mod expr;
+pub mod stmt;
 pub mod token;
 pub mod token_display;
 pub mod token_type;
 pub mod data_types;
+pub mod ast_printer;
+pub mod ast_interpreter;
+pub mod environment;
 
 trait Visit<T = ()> {
     fn visit_aa(&self, a: &Aa) -> T;

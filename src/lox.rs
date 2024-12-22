@@ -1,33 +1,27 @@
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
 use bytes::Bytes;
 
 use crate::{
-    data_types::scaler::Scalar,
-    error::{MyErrImpl, MyResult},
-    expr::{self, ast_interpreter::AstInterpreter, Expr},
-    parser::Parser,
-    scanner::Scanner,
-    token::Token,
+    ast_interpreter::AstInterpreter, environment::Environment, expr::Expr, parser::Parser,
+    scanner::Scanner, stmt::Stmt,
 };
-
 pub struct Lox {}
 impl Lox {
-    pub fn run_file(path: PathBuf) -> MyResult<()> {
+    pub fn run_file(path: PathBuf) {
         let b = Self::read(path);
         Self::run(b)
     }
-    pub fn parse(path: PathBuf) -> Option<Expr> {
+    pub fn parse(path: PathBuf) -> Vec<Stmt> {
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         parser.parse()
     }
     pub fn evaluate(path: PathBuf) {
-        let expr = Self::parse(path);
-        match expr {
-            Some(expr) => expr.interpret(),
-            None => todo!(),
-        };
+        let stmts = Self::parse(path);
+        let mut env = Environment::new(None);
+
+        stmts.iter().for_each(|stmt| stmt.interpret(&mut env));
     }
     pub fn tokenize(path: PathBuf) -> Scanner {
         let b = Self::read(path);
@@ -42,11 +36,9 @@ impl Lox {
         eprintln!("files data: {:?}", b);
         b
     }
-    fn run(b: Bytes) -> MyResult<()> {
+    fn run(b: Bytes) {
         let mut scanner = Scanner::new(b);
         scanner.scan_tokens().expect("scan_tokens");
-        scanner.print_tokens();
-
-        Ok(())
+        // scanner.print_tokens();
     }
 }

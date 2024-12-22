@@ -6,7 +6,7 @@ use TokenType::*;
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let lexeme = &self.lexeme;
-        match &self.token_type {
+        match &self.t_type {
             IDENTIFIER(s) => write!(f, "IDENTIFIER {} null", lexeme,),
             STRING(s) => write!(f, "STRING {} {}", lexeme, s),
             NUMBER(d) => write!(f, "NUMBER {} {:?}", lexeme, d),
