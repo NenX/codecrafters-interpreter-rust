@@ -17,18 +17,17 @@ fn main() {
         Cmd::Parse { file } => {
             let opt = Lox::parse(file);
 
-            // opt.and_then(|expr| {
-            //     let s = expr.print();
-            //     println!("{}", s);
-            //     Some(s)
-            // });
+            opt.and_then(|expr| {
+                let s = expr.print(true);
+                println!("{}", s);
+                Some(s)
+            });
         }
         Cmd::Evaluate { file } => {
             Lox::evaluate(file);
         }
         Cmd::Run { file } => {
-            // Lox::run_file(file);
-            Lox::evaluate(file);
+            Lox::run_file(file);
 
         }
     }

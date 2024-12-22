@@ -11,17 +11,20 @@ use crate::{
 use super::AstInterpreter;
 
 impl AstInterpreter for Expr {
-    type Output = Scalar;
+    type Output = MyResult<Scalar>;
 
     fn interpret(&self, env: &mut Environment) -> Self::Output {
-        let scaler = match self.interpret_checked(env) {
-            Ok(sc) => {
-                sc
-            }
-            Err(e) => Scalar::Nil,
-        };
-        scaler
+        self.interpret_checked(env)
     }
+    // fn interpret(&self, env: &mut Environment) -> Self::Output {
+    //     let scaler = match self.interpret_checked(env) {
+    //         Ok(sc) => {
+    //             sc
+    //         }
+    //         Err(e) => Scalar::Nil,
+    //     };
+    //     scaler
+    // }
 }
 impl Expr {
     fn interpret_checked(&self, env: &mut Environment) -> MyResult<Scalar> {

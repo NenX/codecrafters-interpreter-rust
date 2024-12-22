@@ -29,9 +29,13 @@ impl Stmt {
             Stmt::Var(var_stmt) => {
                 let var_stmt = var_stmt.clone();
                 let name = var_stmt.name.lexeme;
-                let value = var_stmt.initializer.map(|x| x.interpret(env));
+                if let Some(x) = var_stmt.initializer {
+                    let value = x.interpret(env)?;
+                    env.define(name, Some(value));
+                } else {
+                    env.define(name, None);
 
-                env.define(name, value);
+                }
             }
             Stmt::Expression(expression_stmt) => {
                 expression_stmt.expression.interpret(env);
@@ -42,7 +46,7 @@ impl Stmt {
                 }
             }
             Stmt::Print(print_stmt) => {
-                let result = print_stmt.expression.interpret(env);
+                let result = print_stmt.expression.interpret(env)?;
 
                 println!("{}", result)
             }

@@ -53,6 +53,22 @@ impl Parser {
         }
         v
     }
+    pub fn parse_expression(&mut self) -> Option<Expr> {
+        let res = self.expression();
+        match res {
+            Ok(expr) => Some(expr),
+            Err(e) => {
+                if let Ok(e) = e.downcast::<ParseError>() {
+                    match e {
+                        ParseError::NotExpected(token, message) => {
+                            my_error_token(token, message);
+                        }
+                    }
+                }
+                return None;
+            }
+        }
+    }
     fn synchronize(&mut self) {
         self.advance_unchecked();
 
@@ -224,25 +240,25 @@ impl Parser {
         };
         Ok(expr)
     }
-    pub fn is_at_end(&self) -> bool {
+    fn is_at_end(&self) -> bool {
         if self.current >= self.end {
             return true;
         }
         self.peek_unchecked().t_type == EOF
     }
-    pub fn peek_unchecked(&self) -> Token {
+    fn peek_unchecked(&self) -> Token {
         self.tokens.get(self.current).expect("peek token").clone()
     }
-    pub fn advance_unchecked(&mut self) -> Token {
+    fn advance_unchecked(&mut self) -> Token {
         let next = self.peek_unchecked();
         self.current += 1;
         next
     }
-    pub fn check_unchecked<'a>(&self, targets: impl IntoIterator<Item = &'a TokenType>) -> bool {
+    fn check_unchecked<'a>(&self, targets: impl IntoIterator<Item = &'a TokenType>) -> bool {
         let next = &self.peek_unchecked();
         targets.into_iter().any(|t| next.is_same_type(t))
     }
-    pub fn match_advance_unchecked(
+    fn match_advance_unchecked(
         &mut self,
         targets: impl IntoIterator<Item = TokenType>,
     ) -> Option<Token> {

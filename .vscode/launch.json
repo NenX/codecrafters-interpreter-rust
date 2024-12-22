@@ -13,7 +13,7 @@
             // "args": ["parse","test.lox"],
             "args": [
                 "evaluate",
-                "test.lox"
+                "eval.lox"
             ],
             "stopAtEntry": false,
             "preLaunchTask": "rust: cargo build",
