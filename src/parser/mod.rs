@@ -154,8 +154,7 @@ impl Parser {
     }
     fn assignment(&mut self) -> MyResult<Expr> {
         let expr = self.equality()?;
-        let next = self.peek_unchecked();
-        if next.is_same_type(&EQUAL) {
+        if let Some(equal) = self.match_advance_unchecked([EQUAL]) {
             match expr {
                 Expr::Variable(variable_expr) => {
                     return Ok(AssignExpr {
@@ -165,7 +164,7 @@ impl Parser {
                     .into())
                 }
                 _ => {
-                    return MyErr!(,ParseError::NotExpected(next, format!("Invalid assignment target.")))
+                    return MyErr!(,ParseError::NotExpected(equal, format!("Invalid assignment target.")))
                 }
             }
         }
