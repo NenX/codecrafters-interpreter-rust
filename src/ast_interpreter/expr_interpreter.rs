@@ -133,7 +133,24 @@ impl Expr {
                     }
                 }
             }
-            Expr::Logical(logical_expr) => todo!(),
+            Expr::Logical(logical_expr) => {
+                let left_scalar = logical_expr.letf.interpret_checked(env.clone())?;
+                let left_condition = (!!left_scalar.clone()).as_bool().unwrap();
+                // println!("[left] {} {}",left_scalar,left_condition);
+                if matches!(&logical_expr.operator.t_type, TokenType::OR) {
+                    if left_condition {
+                        left_scalar
+                    } else {
+                        logical_expr.right.interpret_checked(env.clone())?
+                    }
+                } else {
+                    if left_condition {
+                        logical_expr.right.interpret_checked(env.clone())?
+                    } else {
+                        left_scalar
+                    }
+                }
+            }
         };
         Ok(value)
     }

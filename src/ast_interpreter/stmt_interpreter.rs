@@ -47,7 +47,9 @@ impl Stmt {
                 println!("{}", result)
             }
             Stmt::If(if_stmt) => {
-                let condition = if_stmt.condition.interpret(env.clone())?.as_bool().unwrap();
+                let left_value: Scalar = if_stmt.condition.interpret(env.clone())?;
+                let condition = (!!left_value.clone()).as_bool().unwrap();
+                // println!("[if] {} {}", left_value, condition);
 
                 if condition {
                     if_stmt.then_branch.interpret(env)?;

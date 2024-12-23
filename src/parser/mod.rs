@@ -130,21 +130,24 @@ impl Parser {
         Ok(VarStmt { name, initializer }.into())
     }
     fn statement(&mut self) -> MyResult<Stmt> {
-        if self.match_advance_unchecked([PRINT]).is_some() {
-            return self.print_stmt();
-        }
-        if self.match_advance_unchecked([LeftBrace]).is_some() {
-            return self.block_stmt();
+        if self.match_advance_unchecked([FOR]).is_some() {
+            return self.for_stmt();
         }
         if self.match_advance_unchecked([IF]).is_some() {
             return self.if_stmt();
         }
+        if self.match_advance_unchecked([PRINT]).is_some() {
+            return self.print_stmt();
+        }
         if self.match_advance_unchecked([WHILE]).is_some() {
             return self.while_stmt();
         }
-        if self.match_advance_unchecked([FOR]).is_some() {
-            return self.for_stmt();
+        if self.match_advance_unchecked([LeftBrace]).is_some() {
+            return self.block_stmt();
         }
+  
+   
+  
         self.expression_stmt()
     }
     fn if_stmt(&mut self) -> MyResult<Stmt> {
@@ -279,27 +282,26 @@ impl Parser {
         Ok(expr)
     }
     fn or(&mut self) -> MyResult<Expr> {
-        let expr = self.and()?;
-        if let Some(x) = self.match_advance_unchecked([OR]) {
-            return Ok(LogicalExpr {
+        let mut expr = self.and()?;
+        while let Some(x) = self.match_advance_unchecked([OR]) {
+            expr = LogicalExpr {
                 letf: expr,
                 right: self.and()?,
                 operator: x,
             }
-            .into());
+            .into();
         }
         return Ok(expr);
     }
     fn and(&mut self) -> MyResult<Expr> {
-        let expr = self.equality()?;
+        let mut expr = self.equality()?;
 
-        if let Some(x) = self.match_advance_unchecked([AND]) {
-            return Ok(LogicalExpr {
+        while let Some(x) = self.match_advance_unchecked([AND]) {
+            expr = LogicalExpr {
                 letf: expr,
                 right: self.equality()?,
                 operator: x,
-            }
-            .into());
+            }.into();
         }
 
         return Ok(expr);
