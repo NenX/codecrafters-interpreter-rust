@@ -1,12 +1,18 @@
 pub mod parse_error;
 
+use std::borrow::Borrow;
+
 use crate::{
+    data_types::scaler::Scalar,
     error::{my_error_token, MyError, MyResult},
     expr::{
         self, assign::AssignExpr, binary::BinaryExpr, grouping::GroupingExpr, literal::LiteralExpr,
-        unary::UnaryExpr, variable::VariableExpr, Expr,
+        logical::LogicalExpr, unary::UnaryExpr, variable::VariableExpr, Expr,
     },
-    stmt::{block::BlockStmt, expression::ExpressionStmt, print::PrintStmt, var::VarStmt, Stmt},
+    stmt::{
+        block::BlockStmt, expression::ExpressionStmt, if_stmt::IfStmt, print::PrintStmt,
+        var::VarStmt, while_stmt::WhileStmt, Stmt,
+    },
     token::Token,
     token_type::{CmpTokenType, TokenType},
     MyErr,
@@ -17,12 +23,17 @@ use TokenType::*;
 program        → declaration* EOF
 declaration    → varDecl | statement
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";"
-statement      → exprStmt | printStmt | block
+statement      → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block
+ifStmt         → "if" "(" expression ")" statement ( "else" statement )?
+whileStmt      → "while" "(" expression ")" statement
+forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement
 block          → "{" declaration* "}"
 exprStmt       → expression ";"
 printStmt      → "print" expression ";"
 expression     → assignment
-assignment     → IDENTIFIER "=" assignment | equality ;
+assignment     → IDENTIFIER "=" assignment | logic_or
+logic_or       → logic_and ( "or" logic_and )*
+logic_and      → equality ( "and" equality )*
 equality -> comparision ( ( "!=" | "==" ) comparision )*
 comparision -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
 term -> factor ( ( "+" | "-" ) factor )*
@@ -125,7 +136,103 @@ impl Parser {
         if self.match_advance_unchecked([LeftBrace]).is_some() {
             return self.block_stmt();
         }
+        if self.match_advance_unchecked([IF]).is_some() {
+            return self.if_stmt();
+        }
+        if self.match_advance_unchecked([WHILE]).is_some() {
+            return self.while_stmt();
+        }
+        if self.match_advance_unchecked([FOR]).is_some() {
+            return self.for_stmt();
+        }
         self.expression_stmt()
+    }
+    fn if_stmt(&mut self) -> MyResult<Stmt> {
+        self.consume(LeftParen, "Expect '(' after 'if'.")?;
+
+        let condition = self.expression()?;
+
+        self.consume(RightParen, "Expect ')' after if condition.")?;
+
+        let then_branch = self.statement()?;
+
+        if self.match_advance_unchecked([ELSE]).is_some() {
+            Ok(IfStmt {
+                then_branch,
+                else_branch: Some(self.statement()?),
+                condition,
+            }
+            .into())
+        } else {
+            Ok(IfStmt {
+                then_branch,
+                else_branch: None,
+                condition,
+            }
+            .into())
+        }
+    }
+    fn while_stmt(&mut self) -> MyResult<Stmt> {
+        self.consume(LeftParen, "Expect '(' after 'while'.")?;
+
+        let condition = self.expression()?;
+        self.consume(RightParen, "Expect ')' after while condition.")?;
+
+        let body = self.statement()?;
+
+        Ok(WhileStmt { condition, body }.into())
+    }
+    fn for_stmt(&mut self) -> MyResult<Stmt> {
+        self.consume(LeftParen, "Expect '(' after 'loop'.")?;
+        let mut body = BlockStmt::from([]);
+        let mut initial = None;
+
+        if let None = self.match_advance_unchecked([SEMICOLON]) {
+            if let Some(_) = self.match_advance_unchecked([VAR]) {
+                initial = Some(self.var_declaration()?)
+            } else {
+                initial = Some(self.expression_stmt()?);
+            }
+        }
+
+        let second = self.peek_unchecked().t_type;
+
+        let condition;
+        if second != SEMICOLON {
+            condition = self.expression()?;
+        } else {
+            condition = LiteralExpr::from(true).into();
+        }
+        self.consume(SEMICOLON, "Expect ';' after loop condition.")?;
+
+        let third = self.peek_unchecked().t_type;
+
+        let mut increment = None;
+        if third != RightParen {
+            increment = Some(self.expression()?);
+        }
+
+        self.consume(RightParen, "Expect ')' after loop condition.")?;
+
+        body.push(self.statement()?);
+
+        if let Some(incremnt) = increment {
+            body.push(ExpressionStmt::from(incremnt).into());
+        }
+
+        let while_stmt = WhileStmt {
+            condition,
+            body: body.clone().into(),
+        };
+        println!("init {:#?}", initial);
+
+        if let Some(init) = initial {
+            let bb = [init, while_stmt.into()];
+            println!("for {:#?}", bb);
+
+            body = BlockStmt::from(bb).into();
+        }
+        Ok(body.into())
     }
     fn block_stmt(&mut self) -> MyResult<Stmt> {
         let mut statements = vec![];
@@ -153,7 +260,7 @@ impl Parser {
         self.assignment()
     }
     fn assignment(&mut self) -> MyResult<Expr> {
-        let expr = self.equality()?;
+        let expr = self.or()?;
         if let Some(equal) = self.match_advance_unchecked([EQUAL]) {
             match expr {
                 Expr::Variable(variable_expr) => {
@@ -170,6 +277,32 @@ impl Parser {
         }
 
         Ok(expr)
+    }
+    fn or(&mut self) -> MyResult<Expr> {
+        let expr = self.and()?;
+        if let Some(x) = self.match_advance_unchecked([OR]) {
+            return Ok(LogicalExpr {
+                letf: expr,
+                right: self.and()?,
+                operator: x,
+            }
+            .into());
+        }
+        return Ok(expr);
+    }
+    fn and(&mut self) -> MyResult<Expr> {
+        let expr = self.equality()?;
+
+        if let Some(x) = self.match_advance_unchecked([AND]) {
+            return Ok(LogicalExpr {
+                letf: expr,
+                right: self.equality()?,
+                operator: x,
+            }
+            .into());
+        }
+
+        return Ok(expr);
     }
     fn equality(&mut self) -> MyResult<Expr> {
         let mut expr = self.comparision()?;

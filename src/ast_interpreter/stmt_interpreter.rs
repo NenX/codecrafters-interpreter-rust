@@ -46,6 +46,25 @@ impl Stmt {
 
                 println!("{}", result)
             }
+            Stmt::If(if_stmt) => {
+                let condition = if_stmt.condition.interpret(env.clone())?.as_bool().unwrap();
+
+                if condition {
+                    if_stmt.then_branch.interpret(env)?;
+                } else {
+                    if let Some(else_branch) = &if_stmt.else_branch {
+                        else_branch.interpret(env)?;
+                    }
+                }
+            }
+            Stmt::While(while_stmt) => {
+                while let Some(condition) = while_stmt.condition.interpret(env.clone())?.as_bool() {
+                    if !condition {
+                        break;
+                    }
+                    while_stmt.body.interpret(env.clone())?;
+                }
+            }
         };
         Ok(value)
     }

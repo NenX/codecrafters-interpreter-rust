@@ -11,6 +11,12 @@ pub enum Scalar {
     Nil,
 }
 impl Scalar {
+    pub(crate) fn as_bool(&self) -> Option<bool> {
+        match self {
+            Scalar::Bool(f) => Some(*f),
+            _ => None,
+        }
+    }
     pub(crate) fn as_number(&self) -> Option<f64> {
         match self {
             Scalar::Number(f) => Some(*f),

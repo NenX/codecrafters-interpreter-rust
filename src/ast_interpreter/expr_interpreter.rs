@@ -111,7 +111,7 @@ impl Expr {
                     Err(_) => {
                         report_runtime(
                             variable.name.line,
-                            format!("Undefined variable '{}'.", variable.name.lexeme),
+                            format!("Access undefined variable '{}'.", variable.name.lexeme),
                         );
                         return MyErr!(;"bad variable access");
                     }
@@ -127,12 +127,13 @@ impl Expr {
                     Err(_) => {
                         report_runtime(
                             assign.name.line,
-                            format!("Undefined variable '{}'.", assign.name.lexeme),
+                            format!("Assign to undefined variable '{}'.", assign.name.lexeme),
                         );
                         return MyErr!(;"bad variable assign");
                     }
                 }
             }
+            Expr::Logical(logical_expr) => todo!(),
         };
         Ok(value)
     }
