@@ -223,19 +223,19 @@ impl Parser {
             body.push(ExpressionStmt::from(incremnt).into());
         }
 
-        let while_stmt = WhileStmt {
+        let mut while_or_block:Stmt = WhileStmt {
             condition,
-            body: body.clone().into(),
-        };
-        println!("init {:#?}", initial);
+            body: body.into(),
+        }.into();
+        // println!("init {:#?}", initial);
 
         if let Some(init) = initial {
-            let bb = [init, while_stmt.into()];
-            println!("for {:#?}", bb);
+            let bb = [init, while_or_block.into()];
+            // println!("for {:#?}", bb);
 
-            body = BlockStmt::from(bb).into();
+            while_or_block = BlockStmt::from(bb).into();
         }
-        Ok(body.into())
+        Ok(while_or_block)
     }
     fn block_stmt(&mut self) -> MyResult<Stmt> {
         let mut statements = vec![];

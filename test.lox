@@ -1,7 +1,7 @@
- print 45 or true;
- print false or 45;
- print false or false or true;
- 
- print false or false;
- print false or false or false;
- print true or true or true or true;
+var bar = 2;
+for (; bar < 12; bar = bar + 1) print bar;
+
+// for (var hello = 0; hello < 2;) {
+//   print hello;
+//   hello = hello + 1;
+// }
