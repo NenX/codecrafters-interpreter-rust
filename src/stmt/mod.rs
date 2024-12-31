@@ -1,14 +1,20 @@
+use std::collections::HashMap;
+
 use block::BlockStmt;
 use expression::ExpressionStmt;
+use function::FunctionStmt;
 use if_stmt::IfStmt;
 use print::PrintStmt;
+use return_stmt::ReturnStmt;
 use var::VarStmt;
 use while_stmt::WhileStmt;
 
 pub mod block;
 pub mod expression;
+pub mod function;
 pub mod if_stmt;
 pub mod print;
+pub mod return_stmt;
 pub mod var;
 pub mod while_stmt;
 
@@ -20,6 +26,16 @@ pub enum Stmt {
     Print(Box<PrintStmt>),
     If(Box<IfStmt>),
     While(Box<WhileStmt>),
+    Function(Box<FunctionStmt>),
+    Return(Box<ReturnStmt>),
+}
+impl Stmt {
+    pub fn as_function(&self) -> Option<&FunctionStmt> {
+        match self {
+            Self::Function(f) => Some(f.as_ref()),
+            _ => None,
+        }
+    }
 }
 impl From<VarStmt> for Stmt {
     fn from(value: VarStmt) -> Self {
@@ -51,3 +67,16 @@ impl From<WhileStmt> for Stmt {
         Self::While(value.into())
     }
 }
+impl From<FunctionStmt> for Stmt {
+    fn from(value: FunctionStmt) -> Self {
+        Self::Function(value.into())
+    }
+}
+impl From<ReturnStmt> for Stmt {
+    fn from(value: ReturnStmt) -> Self {
+        Self::Return(value.into())
+    }
+}
+
+
+

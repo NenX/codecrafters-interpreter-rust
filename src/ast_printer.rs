@@ -29,6 +29,7 @@ impl AstPrinter for Expr {
             Expr::Variable(variable) => todo!(),
             Expr::Assign(assign) => todo!(),
             Expr::Logical(logical_expr) => todo!(),
+            Expr::Call(call_expr) => todo!(),
         }
     }
 

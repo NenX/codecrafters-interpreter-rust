@@ -13,6 +13,7 @@ pub mod data_types;
 pub mod ast_printer;
 pub mod ast_interpreter;
 pub mod environment;
+pub mod callable;
 
 trait Visit<T = ()> {
     fn visit_aa(&self, a: &Aa) -> T;

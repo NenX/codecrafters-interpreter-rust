@@ -6,12 +6,12 @@ use crate::{
     data_types::scaler::Scalar,
     error::{my_error_token, MyError, MyResult},
     expr::{
-        self, assign::AssignExpr, binary::BinaryExpr, grouping::GroupingExpr, literal::LiteralExpr,
-        logical::LogicalExpr, unary::UnaryExpr, variable::VariableExpr, Expr,
+        self, assign::AssignExpr, binary::BinaryExpr, call::CallExpr, grouping::GroupingExpr,
+        literal::LiteralExpr, logical::LogicalExpr, unary::UnaryExpr, variable::VariableExpr, Expr,
     },
     stmt::{
-        block::BlockStmt, expression::ExpressionStmt, if_stmt::IfStmt, print::PrintStmt,
-        var::VarStmt, while_stmt::WhileStmt, Stmt,
+        block::BlockStmt, expression::ExpressionStmt, function::FunctionStmt, if_stmt::IfStmt,
+        print::PrintStmt, return_stmt::ReturnStmt, var::VarStmt, while_stmt::WhileStmt, Stmt,
     },
     token::Token,
     token_type::{CmpTokenType, TokenType},
@@ -20,26 +20,32 @@ use crate::{
 use parse_error::ParseError;
 use TokenType::*;
 /*
-program        → declaration* EOF
-declaration    → varDecl | statement
-varDecl        → "var" IDENTIFIER ( "=" expression )? ";"
-statement      → exprStmt | forStmt | ifStmt | printStmt | whileStmt | block
-ifStmt         → "if" "(" expression ")" statement ( "else" statement )?
-whileStmt      → "while" "(" expression ")" statement
-forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement
-block          → "{" declaration* "}"
-exprStmt       → expression ";"
-printStmt      → "print" expression ";"
-expression     → assignment
-assignment     → IDENTIFIER "=" assignment | logic_or
-logic_or       → logic_and ( "or" logic_and )*
-logic_and      → equality ( "and" equality )*
-equality -> comparision ( ( "!=" | "==" ) comparision )*
-comparision -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
-term -> factor ( ( "+" | "-" ) factor )*
-factor -> unary ( ( "*" | "/" ) unary )*
-unary -> ( "!" | "-" )* unary | primary
-primary -> STRING | NUMBER | "false" | "true" | "nil" | "(" expression ")"
+program        -> declaration* EOF
+declaration    -> funDecl | varDecl | statement
+funDecl        ->  "fun" function ;
+function       ->  IDENTIFIER "(" parameters? ")" block
+parameters     ->  IDENTIFIER ( "," IDENTIFIER )*
+varDecl        -> "var" IDENTIFIER ( "=" expression )? ";"
+statement      -> exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block
+ifStmt         -> "if" "(" expression ")" statement ( "else" statement )?
+whileStmt      -> "while" "(" expression ")" statement
+forStmt        -> "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement
+block          -> "{" declaration* "}"
+exprStmt       -> expression ";"
+printStmt      -> "print" expression ";"
+returnStmt     -> "return" expression? ";"
+expression     -> assignment
+assignment     -> IDENTIFIER "=" assignment | logic_or
+logic_or       -> logic_and ( "or" logic_and )*
+logic_and      -> equality ( "and" equality )*
+equality       -> comparision ( ( "!=" | "==" ) comparision )*
+comparision    -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
+term           -> factor ( ( "+" | "-" ) factor )*
+factor         -> unary ( ( "*" | "/" ) unary )*
+unary          -> ( "!" | "-" )* unary | call
+call           -> primary ( "(" arguments? ")" )*
+arguments      -> expression ( "," expression )*
+primary        -> STRING | NUMBER | "false" | "true" | "nil" | "(" expression ")"
 */
 pub struct Parser {
     tokens: Vec<Token>,
@@ -112,10 +118,33 @@ impl Parser {
         }
     }
     fn declaration(&mut self) -> MyResult<Stmt> {
+        if self.match_advance_unchecked([FUN]).is_some() {
+            return self.function_declaration();
+        };
         if self.match_advance_unchecked([VAR]).is_some() {
             return self.var_declaration();
         };
         self.statement()
+    }
+    fn function_declaration(&mut self) -> MyResult<Stmt> {
+        let name = self.consume(IDENTIFIER(format!("")), "")?;
+        let _ = self.consume(LeftParen, "")?;
+        let mut params = vec![];
+
+        if !self.check_unchecked([&RightParen]) {
+            params.push(self.consume(IDENTIFIER(format!("")), "Expect parameter name.")?);
+
+            while let Some(_) = self.match_advance_unchecked([DOT]) {
+                params.push(self.consume(IDENTIFIER(format!("")), "Expect parameter name.")?);
+            }
+        }
+
+        let _ = self.consume(RightParen, "Expect ')' after parameters.")?;
+        let _ = self.consume(LeftBrace, format!(r"Expect '{{' after parameters."))?;
+
+        let body = self.block_stmt()?;
+
+        Ok(FunctionStmt { name, params, body }.into())
     }
     fn var_declaration(&mut self) -> MyResult<Stmt> {
         let name = self.consume(IDENTIFIER(format!("")), "")?;
@@ -130,6 +159,9 @@ impl Parser {
         Ok(VarStmt { name, initializer }.into())
     }
     fn statement(&mut self) -> MyResult<Stmt> {
+        if self.match_advance_unchecked([RETURN]).is_some() {
+            return self.return_stmt();
+        }
         if self.match_advance_unchecked([FOR]).is_some() {
             return self.for_stmt();
         }
@@ -145,9 +177,7 @@ impl Parser {
         if self.match_advance_unchecked([LeftBrace]).is_some() {
             return self.block_stmt();
         }
-  
-   
-  
+
         self.expression_stmt()
     }
     fn if_stmt(&mut self) -> MyResult<Stmt> {
@@ -184,6 +214,15 @@ impl Parser {
         let body = self.statement()?;
 
         Ok(WhileStmt { condition, body }.into())
+    }
+    fn return_stmt(&mut self) -> MyResult<Stmt> {
+        let keyword = self.previous_unchecked();
+        let mut value = None;
+        if !self.check_unchecked([&SEMICOLON]) {
+            value = self.expression()?.into();
+        }
+        self.consume(SEMICOLON, "Expect ';' after return value.")?;
+        Ok(ReturnStmt { keyword, value }.into())
     }
     fn for_stmt(&mut self) -> MyResult<Stmt> {
         self.consume(LeftParen, "Expect '(' after 'loop'.")?;
@@ -223,10 +262,11 @@ impl Parser {
             body.push(ExpressionStmt::from(incremnt).into());
         }
 
-        let mut while_or_block:Stmt = WhileStmt {
+        let mut while_or_block: Stmt = WhileStmt {
             condition,
             body: body.into(),
-        }.into();
+        }
+        .into();
         // println!("init {:#?}", initial);
 
         if let Some(init) = initial {
@@ -301,7 +341,8 @@ impl Parser {
                 letf: expr,
                 right: self.equality()?,
                 operator: x,
-            }.into();
+            }
+            .into();
         }
 
         return Ok(expr);
@@ -374,7 +415,37 @@ impl Parser {
             }
             .into());
         }
-        self.primary()
+        self.call()
+    }
+    fn call(&mut self) -> MyResult<Expr> {
+        let mut expr = self.primary()?;
+
+        while let Some(_) = self.match_advance_unchecked([LeftParen]) {
+            expr = self.finish_call(expr)?;
+        }
+        Ok(expr)
+    }
+    fn finish_call(&mut self, callee: Expr) -> MyResult<Expr> {
+        let mut arguments = vec![];
+        let is_right_paren = self.check_unchecked([&RightParen]);
+
+        if !is_right_paren {
+            arguments.push(self.expression()?);
+            while let Some(_) = self.match_advance_unchecked([DOT]) {
+                if arguments.len() >= 255 {
+                    return MyErr!(,ParseError::NotExpected(self.peek_unchecked(), format!("Can't have more than 255 arguments.")));
+                }
+                arguments.push(self.expression()?);
+            }
+        }
+
+        let parent = self.consume(RightParen, "message")?;
+        Ok(CallExpr {
+            callee,
+            arguments,
+            parent,
+        }
+        .into())
     }
     fn primary(&mut self) -> MyResult<Expr> {
         let next = self.advance_unchecked();
@@ -399,6 +470,12 @@ impl Parser {
             return true;
         }
         self.peek_unchecked().t_type == EOF
+    }
+    fn previous_unchecked(&self) -> Token {
+        self.tokens
+            .get(self.current - 1)
+            .expect("previous token")
+            .clone()
     }
     fn peek_unchecked(&self) -> Token {
         self.tokens.get(self.current).expect("peek token").clone()
@@ -425,7 +502,7 @@ impl Parser {
             None
         }
     }
-    fn consume(&mut self, token: TokenType, message: &str) -> MyResult<Token> {
+    fn consume(&mut self, token: TokenType, msg: impl AsRef<str>) -> MyResult<Token> {
         if self.check_unchecked([&token]) {
             return Ok(self.advance_unchecked());
         };
@@ -434,6 +511,6 @@ impl Parser {
             &token,
             self.peek_unchecked()
         );
-        MyErr!(,ParseError::NotExpected(self.peek_unchecked(), message.to_string()))
+        MyErr!(,ParseError::NotExpected(self.peek_unchecked(), msg .as_ref(). to_string()))
     }
 }

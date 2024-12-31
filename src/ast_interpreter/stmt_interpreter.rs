@@ -1,26 +1,23 @@
 use crate::{
-    ast_printer::AstPrinter,
-    data_types::scaler::Scalar,
+    data_types::scaler::{Scalar, UserFn},
     environment::{Environment, EnvironmentType},
-    error::{report_runtime, MyResult},
-    expr::{binary::BinaryExpr, Expr},
-    stmt::Stmt,
-    token::Token,
-    token_type::TokenType,
-    MyErr,
+    stmt::Stmt, InterpretRet,
 };
 
-use super::AstInterpreter;
+use super::{
+    interpret_err::{InterpretError, InterpretResult},
+    AstInterpreter,
+};
 
 impl AstInterpreter for Stmt {
-    type Output = MyResult<()>;
+    type Output = InterpretResult<()>;
 
     fn interpret(&self, env: EnvironmentType) -> Self::Output {
         self.interpret_checked(env)
     }
 }
 impl Stmt {
-    fn interpret_checked(&self, env: EnvironmentType) -> MyResult<()> {
+    fn interpret_checked(&self, env: EnvironmentType) -> InterpretResult<()> {
         let value = match self {
             Stmt::Var(var_stmt) => {
                 let var_stmt = var_stmt.clone();
@@ -36,7 +33,7 @@ impl Stmt {
                 expression_stmt.expression.interpret(env)?;
             }
             Stmt::Block(block_stmt) => {
-                let mut env = Environment::new(Some(env));
+                let env = Environment::new(Some(env), Some("block"));
                 for i in &block_stmt.statements {
                     i.interpret_checked(env.clone())?
                 }
@@ -66,6 +63,19 @@ impl Stmt {
                     }
                     while_stmt.body.interpret(env.clone())?;
                 }
+            }
+            Stmt::Function(function_stmt) => {
+                let fun = *(function_stmt.clone());
+                env.borrow_mut().define(
+                    fun.name.lexeme.clone(),
+                    Some(UserFn::new(env.clone(), fun).into()),
+                );
+            }
+            Stmt::Return(return_stmt) => {
+                if let Some(expr) = &return_stmt.value {
+                    return InterpretRet!(expr.interpret(env)?);
+                }
+                return InterpretRet!(Scalar::Nil);
             }
         };
         Ok(value)

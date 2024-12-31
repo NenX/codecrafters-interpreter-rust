@@ -2,15 +2,57 @@ use std::{
     fmt::{Debug, Display},
     ops::{Add, Div, Mul, Neg, Not, Sub},
 };
+mod function_value;
 
-#[derive(Clone, PartialEq, PartialOrd)]
+pub use function_value::*;
+
+// #[derive(Clone, PartialEq, PartialOrd)]
 pub enum Scalar {
     Bool(bool),
     Number(f64),
     String(String),
+    Function(FunctionValue),
     Nil,
 }
+impl Clone for Scalar {
+    fn clone(&self) -> Self {
+        match self {
+            Scalar::Bool(x) => Scalar::Bool(x.clone()),
+            Scalar::Number(x) => Scalar::Number(x.clone()),
+            Scalar::String(x) => Scalar::String(x.clone()),
+            Scalar::Function(callable) => Scalar::Function(callable.clone()),
+            Scalar::Nil => Scalar::Nil,
+        }
+    }
+}
+
+impl PartialEq for Scalar {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Bool(l0), Self::Bool(r0)) => l0 == r0,
+            (Self::Number(l0), Self::Number(r0)) => l0 == r0,
+            (Self::String(l0), Self::String(r0)) => l0 == r0,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+impl PartialOrd for Scalar {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self, other) {
+            (Self::Bool(l0), Self::Bool(r0)) => l0.partial_cmp(r0),
+            (Self::Number(l0), Self::Number(r0)) => l0.partial_cmp(r0),
+            (Self::String(l0), Self::String(r0)) => l0.partial_cmp(r0),
+            _ => None,
+        }
+    }
+}
 impl Scalar {
+    pub(crate) fn as_fun(&self) -> Option<FunctionValue> {
+        match self {
+            Scalar::Function(f) => Some(f.clone()),
+            _ => None,
+        }
+    }
     pub(crate) fn as_bool(&self) -> Option<bool> {
         match self {
             Scalar::Bool(f) => Some(*f),
@@ -30,12 +72,7 @@ impl Scalar {
         }
     }
     pub(crate) fn is_same_type(left: &Self, other: &Self) -> bool {
-        match left {
-            Scalar::Bool(_) => matches!(other, Scalar::Bool(_)),
-            Scalar::Number(_) => matches!(other, Scalar::Number(_)),
-            Scalar::String(_) => matches!(other, Scalar::String(_)),
-            Scalar::Nil => matches!(other, Scalar::Nil),
-        }
+        std::mem::discriminant(left) == std::mem::discriminant(other)
     }
     pub(crate) fn check_number_operands(left: &Self, right: &Self) -> bool {
         matches!((left, right), (Scalar::Number(_), Scalar::Number(_)))
@@ -113,6 +150,7 @@ impl Not for Scalar {
             Scalar::Number(_) => Scalar::Bool(false),
             Scalar::String(_) => Scalar::Bool(false),
             Scalar::Nil => Scalar::Bool(true),
+            Scalar::Function(_) => Scalar::Bool(false),
         }
     }
 }
@@ -133,6 +171,7 @@ impl Display for Scalar {
             Scalar::Number(i) => format!("{}", i),
             Scalar::String(s) => s.clone(),
             Scalar::Nil => format!("nil"),
+            Scalar::Function(function_value) => todo!(),
         };
         write!(f, "{}", s)
     }
@@ -144,7 +183,28 @@ impl Debug for Scalar {
             Scalar::Number(i) => format!("{:?}", i),
             Scalar::String(s) => s.clone(),
             Scalar::Nil => format!("nil"),
+            Scalar::Function(function_value) => todo!(),
         };
         write!(f, "{}", s)
+    }
+}
+impl From<String> for Scalar {
+    fn from(value: String) -> Self {
+        Self::String(value.into())
+    }
+}
+impl From<&str> for Scalar {
+    fn from(value: &str) -> Self {
+        Self::String(value.into())
+    }
+}
+impl From<NativeFn> for Scalar {
+    fn from(value: NativeFn) -> Self {
+        Self::Function(value.into())
+    }
+}
+impl From<UserFn> for Scalar {
+    fn from(value: UserFn) -> Self {
+        Self::Function(value.into())
     }
 }

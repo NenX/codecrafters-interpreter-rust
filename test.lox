@@ -1,7 +1,14 @@
-var bar = 2;
-for (; bar < 12; bar = bar + 1) print bar;
 
-// for (var hello = 0; hello < 2;) {
-//   print hello;
-//   hello = hello + 1;
-// }
+fun makeCounter() {
+  var my_int = 0;
+  fun count() {
+    my_int = my_int + 1;
+    print my_int;
+  }
+
+  return count;
+}
+
+var counter = makeCounter();
+counter(); // "1".
+counter(); // "

@@ -1,7 +1,8 @@
-use crate::environment::{Environment, EnvironmentType};
+use crate::environment::EnvironmentType;
 
-mod expr_interpreter;
-mod stmt_interpreter;
+pub mod expr_interpreter;
+pub mod interpret_err;
+pub mod stmt_interpreter;
 
 pub trait AstInterpreter {
     type Output;

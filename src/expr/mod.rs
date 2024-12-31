@@ -1,5 +1,6 @@
 use assign::AssignExpr;
 use binary::BinaryExpr;
+use call::CallExpr;
 use grouping::GroupingExpr;
 use literal::LiteralExpr;
 use logical::LogicalExpr;
@@ -8,6 +9,7 @@ use variable::VariableExpr;
 
 pub mod assign;
 pub mod binary;
+pub mod call;
 pub mod grouping;
 pub mod literal;
 pub mod logical;
@@ -22,6 +24,7 @@ pub enum Expr {
     Logical(Box<LogicalExpr>),
     Grouping(Box<GroupingExpr>),
     Literal(Box<LiteralExpr>),
+    Call(Box<CallExpr>),
     Unary(Box<UnaryExpr>),
 }
 impl From<BinaryExpr> for Expr {
@@ -57,5 +60,10 @@ impl From<AssignExpr> for Expr {
 impl From<LogicalExpr> for Expr {
     fn from(value: LogicalExpr) -> Self {
         Self::Logical(value.into())
+    }
+}
+impl From<CallExpr> for Expr {
+    fn from(value: CallExpr) -> Self {
+        Self::Call(value.into())
     }
 }

@@ -1,20 +1,34 @@
-use std::path::PathBuf;
+use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::LazyLock};
 
 use bytes::Bytes;
 
 use crate::{
-    ast_interpreter::AstInterpreter, data_types::scaler::Scalar, environment::Environment,
-    error::MyResult, expr::Expr, parser::Parser, scanner::Scanner, stmt::Stmt,
+    ast_interpreter::{interpret_err::InterpretError, AstInterpreter},
+    environment::Environment,
+    error::MyResult,
+    expr::Expr,
+    parser::Parser,
+    scanner::Scanner,
+    MyErr,
 };
+
 pub struct Lox {}
 impl Lox {
     pub fn run_file(path: PathBuf) -> MyResult<()> {
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         let stmts = parser.parse();
-        let env = Environment::new(None);
+        let env = Environment::global_env();
         for stmt in stmts {
-            stmt.interpret(env.clone())?;
+            let res = stmt.interpret(env.clone());
+            if let Err(e) = res {
+                match e {
+                    InterpretError::Runtime(msg) => return MyErr!(;msg),
+                    _ => {
+                        println!("stmt err {:?}", e)
+                    }
+                }
+            }
         }
         Ok(())
     }
@@ -24,7 +38,7 @@ impl Lox {
         parser.parse_expression()
     }
     pub fn evaluate(path: PathBuf) {
-        let env = Environment::new(None);
+        let env = Environment::new(None, None);
 
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());

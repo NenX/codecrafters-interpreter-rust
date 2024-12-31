@@ -1,24 +1,43 @@
 use std::{
-    cell::RefCell, collections::HashMap, error::Error, fmt::Display, rc::Rc, sync::LazyLock,
+    borrow::Borrow, cell::RefCell, collections::HashMap, error::Error, fmt::Display, rc::Rc,
+    sync::LazyLock,
 };
 
-use crate::data_types::scaler::Scalar;
+use crate::{
+    callable::Callable,
+    data_types::scaler::{FunctionValue, NativeFn, Scalar},
+};
+pub type EnvironmentType = Rc<RefCell<Environment>>;
 
+#[derive(Debug)]
 pub struct Environment {
+    name: String,
     enclosing: Option<EnvironmentType>,
     values: HashMap<String, Scalar>,
 }
-pub type EnvironmentType = Rc<RefCell<Environment>>;
 
 impl Environment {
-    pub fn new(enclosing: Option<EnvironmentType>) -> Rc<RefCell<Self>> {
+    pub fn new(enclosing: Option<EnvironmentType>, name: Option<&str>) -> Rc<RefCell<Self>> {
         Rc::new(RefCell::new(Self {
+            name: name.as_ref().unwrap_or(&"default").to_string(),
             enclosing,
             values: HashMap::new(),
         }))
     }
-    pub fn define(&mut self, name: String, value: Option<Scalar>) {
-        self.values.insert(name, value.unwrap_or(Scalar::Nil));
+    pub fn global_env() -> EnvironmentType {
+        let mut global = Self {
+            name: "global".to_string(),
+            enclosing: None,
+            values: HashMap::new(),
+        };
+
+        global.define("clock", Some(NativeFn::Clock.into()));
+        global.define("log", Some(NativeFn::Log.into()));
+        Rc::new(RefCell::new(global))
+    }
+    pub fn define<T: AsRef<str>>(&mut self, name: T, value: Option<Scalar>) {
+        self.values
+            .insert(name.as_ref().to_string(), value.unwrap_or(Scalar::Nil));
     }
     pub fn assign(&mut self, name: String, value: Scalar) -> Result<(), EnvironmentErr> {
         if self.values.contains_key(&name) {
@@ -35,7 +54,12 @@ impl Environment {
             return Ok(self.values.get(name).unwrap().clone());
         }
         match &self.enclosing {
-            Some(parent) => parent.borrow().get(name),
+            Some(parent) => {
+                // parent.borrow().get(name);
+                let a: &RefCell<Environment> = parent.borrow();
+                let b = a.borrow();
+                b.get(name)
+            }
             None => Err(EnvironmentErr::AccessUndefined),
         }
     }

@@ -1,17 +1,20 @@
 use crate::{
     data_types::scaler::Scalar,
     environment::{Environment, EnvironmentType},
-    error::{report_runtime, MyResult},
+    error::report_runtime,
     expr::{binary::BinaryExpr, Expr},
     token::Token,
     token_type::TokenType,
-    MyErr,
+    InterpretRtErr,
 };
 
-use super::AstInterpreter;
+use super::{
+    interpret_err::{InterpretError, InterpretResult},
+    AstInterpreter,
+};
 
 impl AstInterpreter for Expr {
-    type Output = MyResult<Scalar>;
+    type Output = InterpretResult<Scalar>;
 
     fn interpret(&self, env: EnvironmentType) -> Self::Output {
         self.interpret_checked(env)
@@ -27,7 +30,7 @@ impl AstInterpreter for Expr {
     // }
 }
 impl Expr {
-    fn interpret_checked(&self, env: EnvironmentType) -> MyResult<Scalar> {
+    fn interpret_checked(&self, env: EnvironmentType) -> InterpretResult<Scalar> {
         let value = match self {
             Expr::Binary(binary) => {
                 let BinaryExpr {
@@ -53,7 +56,7 @@ impl Expr {
                                 format!("Operands must be two numbers or two strings."),
                             );
 
-                            return MyErr!(;"bad eval");
+                            return InterpretRtErr!(;"bad eval");
                         };
                         left + right
                     }
@@ -113,7 +116,7 @@ impl Expr {
                             variable.name.line,
                             format!("Access undefined variable '{}'.", variable.name.lexeme),
                         );
-                        return MyErr!(;"bad variable access");
+                        return InterpretRtErr!(;"bad variable access");
                     }
                 }
             }
@@ -129,7 +132,7 @@ impl Expr {
                             assign.name.line,
                             format!("Assign to undefined variable '{}'.", assign.name.lexeme),
                         );
-                        return MyErr!(;"bad variable assign");
+                        return InterpretRtErr!(;"bad variable assign");
                     }
                 }
             }
@@ -151,23 +154,38 @@ impl Expr {
                     }
                 }
             }
+            Expr::Call(call_expr) => {
+                let scalar = call_expr.callee.interpret(env.clone())?;
+                let expr_arr = &call_expr.arguments;
+                let mut args = vec![];
+                for expr in expr_arr {
+                    args.push(expr.interpret(env.clone())?);
+                }
+                let maybe_fun = scalar.as_fun();
+                let f = match maybe_fun {
+                    Some(f) => f,
+                    None => return InterpretRtErr!(;"Can only call functions and classes."),
+                };
+
+                f.call(args)?
+            }
         };
         Ok(value)
     }
 }
-fn check_number_operands(left: &Scalar, right: &Scalar, operator: &Token) -> MyResult<()> {
+fn check_number_operands(left: &Scalar, right: &Scalar, operator: &Token) -> InterpretResult<()> {
     if Scalar::check_number_operands(left, right) {
         Ok(())
     } else {
         report_runtime(operator.line, format!("Operands must be numbers."));
-        MyErr!(;"bad eval")
+        InterpretRtErr!(;"bad eval")
     }
 }
-fn check_number_operand(right: &Scalar, operator: &Token) -> MyResult<()> {
+fn check_number_operand(right: &Scalar, operator: &Token) -> InterpretResult<()> {
     if matches!(right, Scalar::Number(_)) {
         Ok(())
     } else {
         report_runtime(operator.line, format!("Operand must be a number."));
-        MyErr!(;"bad eval")
+        InterpretRtErr!(;"bad eval")
     }
 }
