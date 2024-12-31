@@ -1,4 +1,5 @@
 use crate::{
+    callable::Callable,
     data_types::scaler::Scalar,
     environment::{Environment, EnvironmentType},
     error::report_runtime,
@@ -158,11 +159,9 @@ impl Expr {
                 let scalar = call_expr.callee.interpret(env.clone())?;
                 let expr_arr = &call_expr.arguments;
                 let mut args = vec![];
-                for expr in expr_arr {
-                    args.push(expr.interpret(env.clone())?);
-                }
+
                 let maybe_fun = scalar.as_fun();
-                let f = match maybe_fun {
+                let fun = match maybe_fun {
                     Some(f) => f,
                     None => {
                         return {
@@ -175,7 +174,19 @@ impl Expr {
                     }
                 };
 
-                f.call(args)?
+                if fun.arity() != expr_arr.len() {
+                    let msg = format!(
+                        "Expected {} arguments but got {}.",
+                        fun.arity(),
+                        expr_arr.len()
+                    );
+                    report_runtime(call_expr.parent.line, msg);
+                    return InterpretRtErr!(;msg);
+                }
+                for expr in expr_arr {
+                    args.push(expr.interpret(env.clone())?);
+                }
+                fun.call(args)?
             }
         };
         Ok(value)

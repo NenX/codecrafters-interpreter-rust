@@ -25,17 +25,24 @@ impl From<NativeFn> for FunctionValue {
         Self::Native(value)
     }
 }
-impl FunctionValue {
-    pub fn call(&self, args: Vec<Scalar>) -> InterpretResult<Scalar> {
+impl Callable for FunctionValue {
+    fn call(&self, args: Vec<Scalar>) -> InterpretResult<Scalar> {
         match self {
             FunctionValue::User(user_fn) => user_fn.call(args),
             FunctionValue::Native(native_fn) => native_fn.call(args),
         }
     }
-    pub fn to_string(&self) -> String {
+    fn to_string(&self) -> String {
         match self {
             FunctionValue::User(user_fn) => user_fn.to_string(),
             FunctionValue::Native(native_fn) => native_fn.to_string(),
+        }
+    }
+
+    fn arity(&self) -> usize {
+        match self {
+            FunctionValue::User(user_fn) => user_fn.arity(),
+            FunctionValue::Native(native_fn) => native_fn.arity(),
         }
     }
 }

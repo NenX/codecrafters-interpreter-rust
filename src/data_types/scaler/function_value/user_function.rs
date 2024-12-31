@@ -53,13 +53,7 @@ impl Callable for UserFn {
         Ok(ret)
     }
 
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-}
-impl From<&Box<dyn Callable>> for UserFn {
-    fn from(value: &Box<dyn Callable>) -> Self {
-        let a: &Self = value.as_any().downcast_ref().unwrap();
-        a.clone()
+    fn arity(&self) -> usize {
+        self.declaration.params.len()
     }
 }

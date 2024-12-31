@@ -26,25 +26,11 @@ impl Callable for NativeFn {
         };
         Ok(value)
     }
-    fn is_naive(&self) -> bool {
-        true
+    
+    fn arity(&self) -> usize {
+        0
     }
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
+
 }
 
-impl From<&Box<dyn Callable>> for NativeFn {
-    fn from(value: &Box<dyn Callable>) -> Self {
-        let a: &Self = value.as_any().downcast_ref().unwrap();
-        a.clone()
-    }
-}
 
-#[test]
-fn tt() {
-    let a = SystemTime::now();
-    let d = a.duration_since(SystemTime::UNIX_EPOCH).unwrap();
-
-    println!("{:?}", d.as_millis())
-}

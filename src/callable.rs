@@ -1,13 +1,12 @@
-use crate::{ast_interpreter::interpret_err::InterpretResult, data_types::scaler::Scalar, error::MyResult};
+use crate::{
+    ast_interpreter::interpret_err::InterpretResult, data_types::scaler::Scalar, error::MyResult,
+};
 
 pub trait Callable {
-    fn as_any(&self) -> &dyn std::any::Any;
     fn to_string(&self) -> String {
         format!("<native fn>")
     }
-    fn is_naive(&self) -> bool {
-        false
-    }
+    fn arity(&self) -> usize;
 
     fn call(&self, args: Vec<Scalar>) -> InterpretResult<Scalar>;
 }
