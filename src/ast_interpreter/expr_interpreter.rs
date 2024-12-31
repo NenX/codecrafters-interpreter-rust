@@ -164,7 +164,15 @@ impl Expr {
                 let maybe_fun = scalar.as_fun();
                 let f = match maybe_fun {
                     Some(f) => f,
-                    None => return InterpretRtErr!(;"Can only call functions and classes."),
+                    None => {
+                        return {
+                            report_runtime(
+                                call_expr.parent.line,
+                                format!("Can only call functions and classes."),
+                            );
+                            InterpretRtErr!(;"Can only call functions and classes.")
+                        }
+                    }
                 };
 
                 f.call(args)?
