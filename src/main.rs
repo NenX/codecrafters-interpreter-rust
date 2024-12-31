@@ -33,9 +33,12 @@ fn main() {
             let res = Lox::run_file(file);
         }
     }
-    // unsafe {
-    //     println!("HAD_RUNTIME_ERROR {}", HAD_RUNTIME_ERROR);
-    // }
+    unsafe {
+        eprintln!(
+            "HAD_RUNTIME_ERROR {} HAD_ERROR {}",
+            HAD_RUNTIME_ERROR, HAD_ERROR
+        );
+    }
     if unsafe { HAD_ERROR } {
         process::exit(65)
     }
