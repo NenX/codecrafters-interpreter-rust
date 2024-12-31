@@ -134,7 +134,7 @@ impl Parser {
         if !self.check_unchecked([&RightParen]) {
             params.push(self.consume(IDENTIFIER(format!("")), "Expect parameter name.")?);
 
-            while let Some(_) = self.match_advance_unchecked([DOT]) {
+            while let Some(_) = self.match_advance_unchecked([COMMA]) {
                 params.push(self.consume(IDENTIFIER(format!("")), "Expect parameter name.")?);
             }
         }
@@ -431,7 +431,7 @@ impl Parser {
 
         if !is_right_paren {
             arguments.push(self.expression()?);
-            while let Some(_) = self.match_advance_unchecked([DOT]) {
+            while let Some(_) = self.match_advance_unchecked([COMMA]) {
                 if arguments.len() >= 255 {
                     return MyErr!(,ParseError::NotExpected(self.peek_unchecked(), format!("Can't have more than 255 arguments.")));
                 }
