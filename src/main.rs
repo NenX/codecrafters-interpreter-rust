@@ -33,6 +33,9 @@ fn main() {
             let res = Lox::run_file(file);
         }
     }
+    // unsafe {
+    //     println!("HAD_RUNTIME_ERROR {}", HAD_RUNTIME_ERROR);
+    // }
     if unsafe { HAD_ERROR } {
         process::exit(65)
     }
@@ -50,5 +53,5 @@ fn aa() {
     let b = a.clone();
     let c = a.clone();
     c.borrow_mut().age = 33;
-    println!("a {}",a.borrow().age)
+    println!("a {}", a.borrow().age)
 }
