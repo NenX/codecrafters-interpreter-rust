@@ -6,6 +6,8 @@ mod function_value;
 
 pub use function_value::*;
 
+use crate::callable::Callable;
+
 // #[derive(Clone, PartialEq, PartialOrd)]
 pub enum Scalar {
     Bool(bool),
