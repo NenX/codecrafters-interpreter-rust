@@ -32,4 +32,10 @@ impl FunctionValue {
             FunctionValue::Native(native_fn) => native_fn.call(args),
         }
     }
+    pub fn to_string(&self) -> String {
+        match self {
+            FunctionValue::User(user_fn) => user_fn.to_string(),
+            FunctionValue::Native(native_fn) => native_fn.to_string(),
+        }
+    }
 }

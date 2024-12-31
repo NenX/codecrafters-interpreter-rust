@@ -1,5 +1,5 @@
 use std::{
-    fmt::{Debug, Display},
+    fmt::{format, Debug, Display},
     ops::{Add, Div, Mul, Neg, Not, Sub},
 };
 mod function_value;
@@ -171,7 +171,7 @@ impl Display for Scalar {
             Scalar::Number(i) => format!("{}", i),
             Scalar::String(s) => s.clone(),
             Scalar::Nil => format!("nil"),
-            Scalar::Function(function_value) => todo!(),
+            Scalar::Function(function_value) => format!("{}", function_value.to_string()),
         };
         write!(f, "{}", s)
     }

@@ -1,14 +1,2 @@
-
-fun makeCounter() {
-  var my_int = 0;
-  fun count() {
-    my_int = my_int + 1;
-    print my_int;
-  }
-
-  return count;
-}
-
-var counter = makeCounter();
-counter(); // "1".
-counter(); // "
+fun foo() {}
+print foo;
