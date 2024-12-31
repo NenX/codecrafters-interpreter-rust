@@ -180,7 +180,7 @@ impl Expr {
                         fun.arity(),
                         expr_arr.len()
                     );
-                    report_runtime(call_expr.parent.line, msg);
+                    report_runtime(call_expr.parent.line, msg.clone());
                     return InterpretRtErr!(;msg);
                 }
                 for expr in expr_arr {
