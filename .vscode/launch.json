@@ -5,16 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "type": "lldb",
+            "request": "launch",
+            "name": "lldb Debug",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=codecrafters-interpreter",
+                    "--package=codecrafters-interpreter"
+                ],
+            },
+            "args": [
+                "run",
+                "test.lox"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "cppdbg Debug",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/target/debug/codecrafters-interpreter",
-            // "args": ["tokenize","test.lox"],
-            // "args": ["parse","test.lox"],
-            // "args": [
-            //     "evaluate",
-            //     "eval.lox"
-            // ],
             "args": [
                 "run",
                 "test.lox"
@@ -35,8 +46,8 @@
                     "description": "Set Disassembly Flavor to Intel",
                     "text": "-gdb-set disassembly-flavor intel",
                     "ignoreFailures": true
-                }
-            ]
+                },
+            ],
         }
     ]
 }
