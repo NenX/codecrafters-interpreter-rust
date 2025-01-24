@@ -1,4 +1,6 @@
 
+use std::rc::Rc;
+
 use block::BlockStmt;
 use expression::ExpressionStmt;
 use function::FunctionStmt;
@@ -25,7 +27,7 @@ pub enum Stmt {
     Print(Box<PrintStmt>),
     If(Box<IfStmt>),
     While(Box<WhileStmt>),
-    Function(Box<FunctionStmt>),
+    Function(Rc<Box<FunctionStmt>>), // 使用 Rc 避免 Clone 函数
     Return(Box<ReturnStmt>),
 }
 impl Stmt {
@@ -68,7 +70,7 @@ impl From<WhileStmt> for Stmt {
 }
 impl From<FunctionStmt> for Stmt {
     fn from(value: FunctionStmt) -> Self {
-        Self::Function(value.into())
+        Self::Function(Rc::new(Box::new(value)))
     }
 }
 impl From<ReturnStmt> for Stmt {

@@ -1,12 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{
-    error::my_error_token,
-    evaluator::Evaluator,
-    expr::Expr,
-    stmt::Stmt,
-    token::Token,
-};
+use crate::{error::my_error_token, evaluator::Evaluator, expr::Expr, stmt::Stmt, token::Token};
 
 use super::ResolverWalk;
 
@@ -58,8 +52,8 @@ impl<'a> Resolver<'a> {
         self.scopes[len - 1].insert(name, true);
     }
     fn resolve_local(&mut self, expr: &Expr, name: &str) {
-        for i in (0..self.scopes.len()).rev() {
-            if self.scopes[i].contains_key(name) {
+        for (i, item) in self.scopes.iter().rev().enumerate() {
+            if item.contains_key(name) {
                 self.evaluator.resolve(expr, i);
                 return;
             }
@@ -78,6 +72,7 @@ impl ResolverWalk<Expr> for Resolver<'_> {
         match expr {
             Expr::Variable(variable_expr) => {
                 let name = variable_expr.name.lexeme.clone();
+
                 if self
                     .cur_scope()
                     .map_or(false, |scope| matches!(scope.get(&name), Some(false)))

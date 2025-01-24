@@ -1,10 +1,10 @@
-
 use crate::{
     callable::Callable,
     data_types::scaler::Scalar,
     error::report_runtime,
     expr::{binary::BinaryExpr, Expr},
-    token_type::TokenType, InterpretRtErr,
+    token_type::TokenType,
+    InterpretRtErr,
 };
 
 use super::{error::InterpretResult, Evaluator, InterpretError, Interprete};
@@ -81,11 +81,13 @@ impl Interprete<Expr> for Evaluator {
                 _ => Ok(Scalar::Nil),
             },
             Expr::Variable(variable) => {
+                let name = &variable.name.lexeme;
                 let distance = self.get_depth(expr);
+
                 let value = if let Some(distance) = distance {
-                    self.env.borrow().get_at(distance, &variable.name.lexeme)
+                    self.env.borrow().get_at(distance, name)
                 } else {
-                    self.global.borrow().get(&variable.name.lexeme)
+                    self.global.borrow().get(name)
                 };
                 match value {
                     Ok(value) => Ok(value.clone()),

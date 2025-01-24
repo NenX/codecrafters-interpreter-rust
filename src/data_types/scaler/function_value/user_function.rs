@@ -1,4 +1,6 @@
 
+use std::rc::Rc;
+
 use crate::{
     callable::Callable,
     data_types::scaler::Scalar,
@@ -11,10 +13,10 @@ use crate::{
 
 pub struct UserFn {
     closure: EnvironmentType,
-    declaration: FunctionStmt,
+    declaration: Rc<Box<FunctionStmt>>,
 }
 impl UserFn {
-    pub fn new(env: EnvironmentType, delc: FunctionStmt) -> Self {
+    pub fn new(env: EnvironmentType, delc: Rc<Box<FunctionStmt>>) -> Self {
         Self {
             closure: env,
             declaration: delc,
@@ -39,7 +41,7 @@ impl Callable for UserFn {
             env_mut.define(token.lexeme.clone(), args.get(idx).cloned());
         }
         // let res = self.declaration.body.interpret(env.clone());
-        let res = evaluator.eval_stmts(&self.declaration.fn_body, env.clone());
+        let res = evaluator.eval_block(&self.declaration.fn_body, env.clone());
         let ret = match res {
             Ok(_) => Scalar::Nil,
             Err(e) => match e {

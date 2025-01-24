@@ -7,7 +7,8 @@ use crate::{
     error::report_runtime,
     expr::Expr,
     stmt::Stmt,
-    token::Token, InterpretRtErr,
+    token::Token,
+    InterpretRtErr,
 };
 
 use super::{error::InterpretResult, InterpretError, Interprete};
@@ -37,20 +38,28 @@ impl Evaluator {
         self.locals.insert(expr, depth);
     }
     pub fn get_depth(&self, expr: &Expr) -> Option<usize> {
-        self.locals.get(&(expr as *const Expr)).copied()
+        let ptr = expr as *const Expr;
+        let result = self.locals.get(&ptr).copied();
+        result
     }
-    pub fn eval_stmts(
+    pub fn eval_block(
         &mut self,
         statments: &Vec<Stmt>,
         new_env: EnvironmentType,
     ) -> InterpretResult<()> {
+    
         let old_env = self.env.clone();
         self.env = new_env;
-        for stmt in statments {
-            self.eval(stmt)?;
-        }
+        // 使用闭包来捕获环境, 防止环境无法恢复
+        let result = (|| {
+            for stmt in statments {
+                self.eval(stmt)?;
+            }
+            Ok(())
+        })();
+
         self.env = old_env;
-        Ok(())
+        result
     }
     pub(crate) fn check_number_operands(
         &self,

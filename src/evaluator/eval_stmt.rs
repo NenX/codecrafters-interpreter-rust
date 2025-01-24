@@ -52,13 +52,14 @@ impl Interprete<Stmt> for Evaluator {
                 Ok(())
             }
             Stmt::Function(func) => {
-                let fun = UserFn::new(self.env.clone(), func.as_ref().clone());
+                let name = func.name.lexeme.clone();
+                let fun = UserFn::new(self.env.clone(), func.clone());
                 self.env
                     .borrow_mut()
-                    .define(func.name.lexeme.clone(), Some(fun.into()));
+                    .define(name, Some(fun.into()));
                 Ok(())
             }
-            Stmt::Block(block) => self.eval_stmts(&block.statements, Environment::new(Some(self.env.clone()), None)),
+            Stmt::Block(block) => self.eval_block(&block.statements, Environment::new(Some(self.env.clone()), None)),
             Stmt::Return(ret) => {
                 let value = match &ret.value {
                     Some(expr) => self.eval(expr)?,

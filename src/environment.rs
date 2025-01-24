@@ -66,7 +66,7 @@ impl Environment {
         assert!(distance > 0);
         self.enclosing.as_ref()?;
         let mut env: Rc<RefCell<Environment>> = self.enclosing.clone().unwrap();
-        for _ in 0..distance {
+        for _ in 1..distance {
             let _env: &RefCell<Environment> = env.borrow();
             let _env: Rc<RefCell<Environment>> = _env.borrow_mut().enclosing.clone().unwrap();
             env = _env;
