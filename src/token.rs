@@ -1,6 +1,4 @@
-use std::fmt::Display;
 
-use bytes::Bytes;
 
 use crate::token_type::{CmpTokenType, TokenType};
 
@@ -18,6 +16,6 @@ impl CmpTokenType<Token> for Token {
 }
 impl CmpTokenType<TokenType> for Token {
     fn is_same_type(&self, right: &TokenType) -> bool {
-        self.t_type.is_same_type(&right)
+        self.t_type.is_same_type(right)
     }
 }

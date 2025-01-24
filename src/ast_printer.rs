@@ -39,7 +39,7 @@ impl AstPrinter for Expr {
             let _s = format!(" {}", exp.print(debug));
             s.push_str(&_s);
         }
-        s.push_str(")");
+        s.push(')');
         s
     }
 }

@@ -1,11 +1,10 @@
-use std::fmt::Display;
 
 use crate::{
     callable::Callable,
     data_types::scaler::Scalar,
     environment::{Environment, EnvironmentType},
-    evaluator::{Evaluator, InterpretError, InterpretResult, Interprete},
-    stmt::{function::FunctionStmt, Stmt},
+    evaluator::{Evaluator, InterpretError, InterpretResult},
+    stmt::function::FunctionStmt,
 };
 
 #[derive(Debug, Clone)]

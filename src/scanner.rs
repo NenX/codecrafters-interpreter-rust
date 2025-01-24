@@ -1,13 +1,10 @@
-use std::fmt::format;
 
 use anyhow::Context;
-use atoi::atoi;
 use bytes::{Buf, Bytes};
-use clap::builder::Str;
 
 use crate::{
     constants::keywords_map,
-    error::{my_error, unexpected_terminal_err, MyError, MyResult},
+    error::{my_error, unexpected_terminal_err, MyResult},
     token::Token,
     token_type::TokenType,
 };
@@ -220,8 +217,8 @@ impl Scanner {
         }
         let literal = self.source.slice(self.start..self.current);
         let literal = String::from_utf8(literal.to_vec()).unwrap();
-        let n: f64 = literal.parse().expect(&format!("parse f64 {:?}", literal));
-        return Ok(NUMBER(n));
+        let n: f64 = literal.parse().unwrap_or_else(|_| panic!("parse f64 {:?}", literal));
+        Ok(NUMBER(n))
     }
     fn identifier(&mut self) -> MyResult<TokenType> {
         loop {
@@ -241,7 +238,7 @@ impl Scanner {
         if let Some(keyword) = keyword_or_none {
             return Ok(keyword.clone());
         }
-        return Ok(IDENTIFIER(ident));
+        Ok(IDENTIFIER(ident))
     }
 }
 

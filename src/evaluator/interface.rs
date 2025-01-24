@@ -1,4 +1,3 @@
-use crate::environment::EnvironmentType;
 
 pub trait Interprete<T> {
     type Output;

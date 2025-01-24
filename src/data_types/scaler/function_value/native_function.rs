@@ -3,9 +3,7 @@ use std::time::SystemTime;
 use crate::{
     callable::Callable,
     data_types::scaler::Scalar,
-    error::MyResult,
     evaluator::{Evaluator, InterpretResult},
-    InterpretRet,
 };
 
 #[derive(Debug, Clone)]
@@ -21,7 +19,7 @@ impl Callable for NativeFn {
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap();
         let value = match self {
-            NativeFn::Clock => Scalar::Number(duration.as_secs_f64() as f64),
+            NativeFn::Clock => Scalar::Number(duration.as_secs_f64()),
             NativeFn::Log => Scalar::Nil,
         };
         Ok(value)

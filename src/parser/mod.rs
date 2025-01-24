@@ -1,12 +1,10 @@
 pub mod parse_error;
 
-use std::borrow::Borrow;
 
 use crate::{
-    data_types::scaler::Scalar,
-    error::{my_error_token, MyError, MyResult},
+    error::{my_error_token, MyResult},
     expr::{
-        self, assign::AssignExpr, binary::BinaryExpr, call::CallExpr, grouping::GroupingExpr,
+        assign::AssignExpr, binary::BinaryExpr, call::CallExpr, grouping::GroupingExpr,
         literal::LiteralExpr, logical::LogicalExpr, unary::UnaryExpr, variable::VariableExpr, Expr,
     },
     stmt::{
@@ -82,7 +80,7 @@ impl Parser {
                         }
                     }
                 }
-                return None;
+                None
             }
         }
     }
@@ -127,20 +125,20 @@ impl Parser {
         self.statement()
     }
     fn function_declaration(&mut self) -> MyResult<Stmt> {
-        let name = self.consume(IDENTIFIER(format!("")), "")?;
+        let name = self.consume(IDENTIFIER(String::new()), "")?;
         let _ = self.consume(LeftParen, "")?;
         let mut params = vec![];
 
         if !self.check_unchecked([&RightParen]) {
-            params.push(self.consume(IDENTIFIER(format!("")), "Expect parameter name.")?);
+            params.push(self.consume(IDENTIFIER(String::new()), "Expect parameter name.")?);
 
-            while let Some(_) = self.match_advance_unchecked([COMMA]) {
-                params.push(self.consume(IDENTIFIER(format!("")), "Expect parameter name.")?);
+            while self.match_advance_unchecked([COMMA]).is_some() {
+                params.push(self.consume(IDENTIFIER(String::new()), "Expect parameter name.")?);
             }
         }
 
         let _ = self.consume(RightParen, "Expect ')' after parameters.")?;
-        let _ = self.consume(LeftBrace, format!(r"Expect '{{' after parameters."))?;
+        let _ = self.consume(LeftBrace, r"Expect '{' after parameters.")?;
 
         let fn_body = self.block_stmt()?;
 
@@ -152,9 +150,9 @@ impl Parser {
         .into())
     }
     fn var_declaration(&mut self) -> MyResult<Stmt> {
-        let name = self.consume(IDENTIFIER(format!("")), "")?;
+        let name = self.consume(IDENTIFIER(String::new()), "")?;
         let mut initializer = None;
-        if let Some(_) = self.match_advance_unchecked([EQUAL]) {
+        if self.match_advance_unchecked([EQUAL]).is_some() {
             let next = self.expression()?;
 
             initializer = Some(next)
@@ -236,8 +234,8 @@ impl Parser {
         let mut body = BlockStmt::from([]);
         let mut initial = None;
 
-        if let None = self.match_advance_unchecked([SEMICOLON]) {
-            if let Some(_) = self.match_advance_unchecked([VAR]) {
+        if self.match_advance_unchecked([SEMICOLON]).is_none() {
+            if self.match_advance_unchecked([VAR]).is_some() {
                 initial = Some(self.var_declaration()?)
             } else {
                 initial = Some(self.expression_stmt()?);
@@ -277,7 +275,7 @@ impl Parser {
         // println!("init {:#?}", initial);
 
         if let Some(init) = initial {
-            let bb = [init, while_or_block.into()];
+            let bb = [init, while_or_block];
             // println!("for {:#?}", bb);
 
             while_or_block = BlockStmt::from(bb).into();
@@ -323,7 +321,7 @@ impl Parser {
                     .into())
                 }
                 _ => {
-                    return MyErr!(,ParseError::NotExpected(equal, format!("Invalid assignment target.")))
+                    return MyErr!(,ParseError::NotExpected(equal, "Invalid assignment target.".to_string()))
                 }
             }
         }
@@ -340,7 +338,7 @@ impl Parser {
             }
             .into();
         }
-        return Ok(expr);
+        Ok(expr)
     }
     fn and(&mut self) -> MyResult<Expr> {
         let mut expr = self.equality()?;
@@ -354,7 +352,7 @@ impl Parser {
             .into();
         }
 
-        return Ok(expr);
+        Ok(expr)
     }
     fn equality(&mut self) -> MyResult<Expr> {
         let mut expr = self.comparision()?;
@@ -429,7 +427,7 @@ impl Parser {
     fn call(&mut self) -> MyResult<Expr> {
         let mut expr = self.primary()?;
 
-        while let Some(_) = self.match_advance_unchecked([LeftParen]) {
+        while self.match_advance_unchecked([LeftParen]).is_some() {
             expr = self.finish_call(expr)?;
         }
         Ok(expr)
@@ -440,9 +438,9 @@ impl Parser {
 
         if !is_right_paren {
             arguments.push(self.expression()?);
-            while let Some(_) = self.match_advance_unchecked([COMMA]) {
+            while self.match_advance_unchecked([COMMA]).is_some() {
                 if arguments.len() >= 255 {
-                    return MyErr!(,ParseError::NotExpected(self.peek_unchecked(), format!("Can't have more than 255 arguments.")));
+                    return MyErr!(,ParseError::NotExpected(self.peek_unchecked(), "Can't have more than 255 arguments.".to_string()));
                 }
                 arguments.push(self.expression()?);
             }
@@ -470,7 +468,7 @@ impl Parser {
                 GroupingExpr::from(expr).into()
             }
             IDENTIFIER(_) => VariableExpr { name: next }.into(),
-            _ => return MyErr!(,ParseError::NotExpected(next, format!("Expect expression."))),
+            _ => return MyErr!(,ParseError::NotExpected(next, "Expect expression.".to_string())),
         };
         Ok(expr)
     }

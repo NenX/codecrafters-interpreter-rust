@@ -39,7 +39,7 @@ pub static mut HAD_RUNTIME_ERROR: bool = false;
 
 pub fn my_error_token(token: Token, message: String) {
     if token.t_type == TokenType::EOF {
-        report(token.line, format!(" at end"), message);
+        report(token.line, " at end".to_string(), message);
     } else {
         report(token.line, format!(" at '{}'", token.lexeme), message);
     }
@@ -49,7 +49,7 @@ pub fn my_error(line: usize, message: String) {
 }
 
 pub fn unexpected_terminal_err(line: usize) {
-    my_error(line, format!("Unterminated string."));
+    my_error(line, "Unterminated string.".to_string());
 }
 
 fn report(line: usize, r#where: String, message: String) {

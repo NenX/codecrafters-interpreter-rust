@@ -1,11 +1,10 @@
 use std::{
     borrow::Borrow, cell::RefCell, collections::HashMap, error::Error, fmt::Display, rc::Rc,
-    sync::LazyLock,
 };
 
 use crate::{
     callable::Callable,
-    data_types::scaler::{FunctionValue, NativeFn, Scalar},
+    data_types::scaler::{NativeFn, Scalar},
 };
 pub type EnvironmentType = Rc<RefCell<Environment>>;
 
@@ -65,9 +64,7 @@ impl Environment {
     }
     pub fn ancestor(&self, distance: usize) -> Option<EnvironmentType> {
         assert!(distance > 0);
-        if self.enclosing.is_none() {
-            return None;
-        }
+        self.enclosing.as_ref()?;
         let mut env: Rc<RefCell<Environment>> = self.enclosing.clone().unwrap();
         for _ in 0..distance {
             let _env: &RefCell<Environment> = env.borrow();

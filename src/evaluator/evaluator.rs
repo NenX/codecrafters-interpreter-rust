@@ -20,6 +20,12 @@ pub struct Evaluator {
     global: EnvironmentType,
 }
 
+impl Default for Evaluator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Evaluator {
     pub fn new() -> Self {
         let global = Environment::global_env();
@@ -57,7 +63,7 @@ impl Evaluator {
         if Scalar::check_number_operands(left, right) {
             Ok(())
         } else {
-            report_runtime(operator.line, format!("Operands must be numbers."));
+            report_runtime(operator.line, "Operands must be numbers.".to_string());
             InterpretRtErr!(;"bad eval")
         }
     }
@@ -66,7 +72,7 @@ impl Evaluator {
         if matches!(right, Scalar::Number(_)) {
             Ok(())
         } else {
-            report_runtime(operator.line, format!("Operand must be a number."));
+            report_runtime(operator.line, "Operand must be a number.".to_string());
             InterpretRtErr!(;"bad eval")
         }
     }

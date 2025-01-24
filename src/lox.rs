@@ -1,14 +1,13 @@
-use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::LazyLock};
+use std::path::PathBuf;
 
 use bytes::Bytes;
 
 use crate::{
-    environment::Environment,
     error::MyResult,
     evaluator::{Evaluator, InterpretError, Interprete},
     expr::Expr,
     parser::Parser,
-    resolver::{self, Resolver},
+    resolver::{Resolver},
     scanner::Scanner,
     MyErr,
 };

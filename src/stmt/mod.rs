@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 
 use block::BlockStmt;
 use expression::ExpressionStmt;

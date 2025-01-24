@@ -1,11 +1,11 @@
 use crate::{
-   data_types::scaler::Scalar, error::MyResult,
+   data_types::scaler::Scalar,
     evaluator::{Evaluator, InterpretResult},
 };
 
 pub trait Callable {
     fn to_string(&self) -> String {
-        format!("<native fn>")
+        "<native fn>".to_string()
     }
     fn arity(&self) -> usize;
 

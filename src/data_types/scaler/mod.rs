@@ -1,5 +1,5 @@
 use std::{
-    fmt::{format, Debug, Display},
+    fmt::{Debug, Display},
     ops::{Add, Div, Mul, Neg, Not, Sub},
 };
 mod function_value;
@@ -19,8 +19,8 @@ pub enum Scalar {
 impl Clone for Scalar {
     fn clone(&self) -> Self {
         match self {
-            Scalar::Bool(x) => Scalar::Bool(x.clone()),
-            Scalar::Number(x) => Scalar::Number(x.clone()),
+            Scalar::Bool(x) => Scalar::Bool(*x),
+            Scalar::Number(x) => Scalar::Number(*x),
             Scalar::String(x) => Scalar::String(x.clone()),
             Scalar::Function(callable) => Scalar::Function(callable.clone()),
             Scalar::Nil => Scalar::Nil,
@@ -172,8 +172,8 @@ impl Display for Scalar {
             Scalar::Bool(b) => format!("{:?}", b),
             Scalar::Number(i) => format!("{}", i),
             Scalar::String(s) => s.clone(),
-            Scalar::Nil => format!("nil"),
-            Scalar::Function(function_value) => format!("{}", function_value.to_string()),
+            Scalar::Nil => "nil".to_string(),
+            Scalar::Function(function_value) => function_value.to_string(),
         };
         write!(f, "{}", s)
     }
@@ -184,7 +184,7 @@ impl Debug for Scalar {
             Scalar::Bool(b) => format!("{:?}", b),
             Scalar::Number(i) => format!("{:?}", i),
             Scalar::String(s) => s.clone(),
-            Scalar::Nil => format!("nil"),
+            Scalar::Nil => "nil".to_string(),
             Scalar::Function(function_value) => format!("fn {}", function_value.to_string()),
         };
         write!(f, "{}", s)
@@ -192,7 +192,7 @@ impl Debug for Scalar {
 }
 impl From<String> for Scalar {
     fn from(value: String) -> Self {
-        Self::String(value.into())
+        Self::String(value)
     }
 }
 impl From<&str> for Scalar {

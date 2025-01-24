@@ -1,6 +1,5 @@
 use std::fmt::Display;
 
-use crate::token::Token;
 
 #[derive(Debug)]
 pub enum ScalarOpErr {

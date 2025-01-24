@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    error::{my_error, my_error_token},
+    error::my_error_token,
     evaluator::Evaluator,
     expr::Expr,
     stmt::Stmt,
@@ -43,7 +43,7 @@ impl<'a> Resolver<'a> {
         if scope.contains_key(&name) {
             my_error_token(
                 token.clone(),
-                format!("Already a variable with this name in this scope."),
+                "Already a variable with this name in this scope.".to_string(),
             );
         }
         scope.insert(name, false);
@@ -84,7 +84,7 @@ impl ResolverWalk<Expr> for Resolver<'_> {
                 {
                     my_error_token(
                         variable_expr.name.clone(),
-                        format!("Can't read local variable in its own initializer."),
+                        "Can't read local variable in its own initializer.".to_string(),
                     );
                 }
                 self.resolve_local(expr, &name);
