@@ -7,7 +7,7 @@ use super::Stmt;
 pub struct FunctionStmt {
     pub name:Token,
     pub params: Vec<Token>,
-    pub body: Stmt,
+    pub fn_body: Vec<Stmt>,
 }
 
 impl FunctionStmt {

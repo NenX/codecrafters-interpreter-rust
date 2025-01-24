@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::process;
 
 use clap::Parser;

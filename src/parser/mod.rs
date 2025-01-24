@@ -142,9 +142,14 @@ impl Parser {
         let _ = self.consume(RightParen, "Expect ')' after parameters.")?;
         let _ = self.consume(LeftBrace, format!(r"Expect '{{' after parameters."))?;
 
-        let body = self.block_stmt()?;
+        let fn_body = self.block_stmt()?;
 
-        Ok(FunctionStmt { name, params, body }.into())
+        Ok(FunctionStmt {
+            name,
+            params,
+            fn_body,
+        }
+        .into())
     }
     fn var_declaration(&mut self) -> MyResult<Stmt> {
         let name = self.consume(IDENTIFIER(format!("")), "")?;
@@ -175,7 +180,9 @@ impl Parser {
             return self.while_stmt();
         }
         if self.match_advance_unchecked([LeftBrace]).is_some() {
-            return self.block_stmt();
+            return self
+                .block_stmt()
+                .map(|v| BlockStmt { statements: v }.into());
         }
 
         self.expression_stmt()
@@ -277,7 +284,8 @@ impl Parser {
         }
         Ok(while_or_block)
     }
-    fn block_stmt(&mut self) -> MyResult<Stmt> {
+    // 为了给函数使用，返回一个Vec<Stmt>，而不是Stmt
+    fn block_stmt(&mut self) -> MyResult<Vec<Stmt>> {
         let mut statements = vec![];
         loop {
             if self.check_unchecked([&EOF, &RightBrace]) {
@@ -287,7 +295,8 @@ impl Parser {
             statements.push(stmt);
         }
         self.consume(RightBrace, "Block Stmt Expect '}' after block.")?;
-        Ok(BlockStmt { statements }.into())
+        // Ok(BlockStmt { statements }.into())
+        Ok(statements)
     }
     fn print_stmt(&mut self) -> MyResult<Stmt> {
         let expression = self.expression()?;

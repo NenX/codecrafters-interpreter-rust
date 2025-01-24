@@ -12,19 +12,42 @@ use crate::{
     InterpretRet, InterpretRtErr,
 };
 
-use super::{error::InterpretResult, AstInterpreter, InterpretError};
+use super::{error::InterpretResult, InterpretError, Interprete};
 
 pub struct Evaluator {
     locals: HashMap<*const Expr, usize>,
+    env: EnvironmentType,
+    global: EnvironmentType,
 }
 
 impl Evaluator {
     pub fn new() -> Self {
+        let global = Environment::global_env();
         Self {
             locals: HashMap::new(),
+            env: global.clone(),
+            global,
         }
     }
-
+    pub fn resolve(&mut self, expr: &Expr, depth: usize) {
+        self.locals.insert(expr, depth);
+    }
+    pub fn get_depth(&self, expr: &Expr) -> Option<usize> {
+        self.locals.get(&(expr as *const Expr)).copied()
+    }
+    pub fn exit_block(
+        &mut self,
+        statments: &Vec<Stmt>,
+        new_env: EnvironmentType,
+    ) -> InterpretResult<()> {
+        let old_env = self.env.clone();
+        self.env = new_env;
+        for stmt in statments {
+            self.eval(stmt)?;
+        }
+        self.env = old_env;
+        Ok(())
+    }
     fn check_number_operands(
         &self,
         left: &Scalar,
@@ -48,9 +71,9 @@ impl Evaluator {
         }
     }
 }
-impl AstInterpreter<Expr> for Evaluator {
+impl Interprete<Expr> for Evaluator {
     type Output = InterpretResult<Scalar>;
-    fn eval(&mut self, expr: &Expr, env: EnvironmentType) -> InterpretResult<Scalar> {
+    fn eval(&mut self, expr: &Expr) -> InterpretResult<Scalar> {
         match expr {
             Expr::Binary(binary) => {
                 let BinaryExpr {
@@ -58,8 +81,8 @@ impl AstInterpreter<Expr> for Evaluator {
                     right,
                     operator,
                 } = binary.as_ref();
-                let left = self.eval(left, env.clone())?;
-                let right = self.eval(right, env)?;
+                let left = self.eval(left)?;
+                let right = self.eval(right)?;
                 match operator.t_type {
                     TokenType::MINUS => {
                         self.check_number_operands(&left, &right, operator)?;
@@ -108,19 +131,24 @@ impl AstInterpreter<Expr> for Evaluator {
                     _ => Ok(Scalar::Nil),
                 }
             }
-            Expr::Grouping(grouping) => self.eval(&grouping.expression, env),
+            Expr::Grouping(grouping) => self.eval(&grouping.expression),
             Expr::Literal(literal) => Ok(literal.value.clone()),
             Expr::Unary(unary) => match unary.operator.t_type {
-                TokenType::BANG => Ok(!self.eval(&unary.right, env.clone())?),
+                TokenType::BANG => Ok(!self.eval(&unary.right)?),
                 TokenType::MINUS => {
-                    let right = self.eval(&unary.right, env.clone())?;
+                    let right = self.eval(&unary.right)?;
                     self.check_number_operand(&right, &unary.operator)?;
                     Ok(-right)
                 }
                 _ => Ok(Scalar::Nil),
             },
             Expr::Variable(variable) => {
-                let value = env.borrow().get(&variable.name.lexeme);
+                let distance = self.get_depth(expr);
+                let value = if let Some(distance) = distance {
+                    self.env.borrow().get_at(distance, &variable.name.lexeme)
+                } else {
+                    self.global.borrow().get(&variable.name.lexeme)
+                };
                 match value {
                     Ok(value) => Ok(value.clone()),
                     Err(_) => {
@@ -133,10 +161,19 @@ impl AstInterpreter<Expr> for Evaluator {
                 }
             }
             Expr::Assign(assign) => {
-                let value = self.eval(&assign.value, env.clone())?;
-                let result = env
-                    .borrow_mut()
-                    .assign(assign.name.lexeme.clone(), value.clone());
+                let value = self.eval(&assign.value)?;
+                let name = &assign.name.lexeme;
+                let distance = self.get_depth(expr);
+                let result = if let Some(distance) = distance {
+                    self.env
+                        .borrow_mut()
+                        .assign_at(distance, name, value.clone())
+                } else {
+                    self.global.borrow_mut().assign(name, value.clone())
+                };
+                // let result = env
+                //     .borrow_mut()
+                //     .assign(name, value.clone());
                 match result {
                     Ok(_) => Ok(value),
                     Err(_) => {
@@ -149,19 +186,19 @@ impl AstInterpreter<Expr> for Evaluator {
                 }
             }
             Expr::Logical(logical) => {
-                let left = self.eval(&logical.left, env.clone())?;
+                let left = self.eval(&logical.left)?;
                 let left_condition = (!!left.clone()).as_bool().unwrap();
                 match logical.operator.t_type {
                     TokenType::OR if left_condition => Ok(left),
                     TokenType::AND if !left_condition => Ok(left),
-                    _ => self.eval(&logical.right, env),
+                    _ => self.eval(&logical.right),
                 }
             }
             Expr::Call(call) => {
-                let callee = self.eval(&call.callee, env.clone())?;
+                let callee = self.eval(&call.callee)?;
                 let mut args = Vec::new();
                 for arg in &call.arguments {
-                    args.push(self.eval(arg, env.clone())?);
+                    args.push(self.eval(arg)?);
                 }
 
                 let function = callee.as_fun().ok_or_else(|| {
@@ -190,64 +227,59 @@ impl AstInterpreter<Expr> for Evaluator {
         }
     }
 }
-impl AstInterpreter<Stmt> for Evaluator {
+impl Interprete<Stmt> for Evaluator {
     type Output = InterpretResult<()>;
 
-    fn eval(&mut self, stmt: &Stmt, env: EnvironmentType) -> InterpretResult<()> {
+    fn eval(&mut self, stmt: &Stmt) -> InterpretResult<()> {
         match stmt {
             Stmt::Var(var) => {
                 let value = match &var.initializer {
-                    Some(expr) => Some(self.eval(expr, env.clone())?),
+                    Some(expr) => Some(self.eval(expr)?),
                     None => None,
                 };
-                env.borrow_mut().define(var.name.lexeme.clone(), value);
+                self.env.borrow_mut().define(var.name.lexeme.clone(), value);
                 Ok(())
             }
             Stmt::Expression(expr) => {
-                self.eval(&expr.expression, env)?;
+                self.eval(&expr.expression)?;
                 Ok(())
             }
-            Stmt::Block(block) => {
-                let new_env = Environment::new(Some(env), Some("block"));
-                for stmt in &block.statements {
-                    self.eval(stmt, new_env.clone())?;
-                }
-                Ok(())
-            }
+
             Stmt::Print(print) => {
-                let value = self.eval(&print.expression, env)?;
+                let value = self.eval(&print.expression)?;
                 println!("{}", value);
                 Ok(())
             }
             Stmt::If(if_stmt) => {
-                let condition = self.eval(&if_stmt.condition, env.clone())?;
+                let condition = self.eval(&if_stmt.condition)?;
                 if (!!condition).as_bool().unwrap() {
-                    self.eval(&if_stmt.then_branch, env)
+                    self.eval(&if_stmt.then_branch)
                 } else if let Some(else_branch) = &if_stmt.else_branch {
-                    self.eval(else_branch, env)
+                    self.eval(else_branch)
                 } else {
                     Ok(())
                 }
             }
             Stmt::While(while_stmt) => {
-                while let Some(condition) = self.eval(&while_stmt.condition, env.clone())?.as_bool()
-                {
+                while let Some(condition) = self.eval(&while_stmt.condition)?.as_bool() {
                     if !condition {
                         break;
                     }
-                    self.eval(&while_stmt.body, env.clone())?;
+                    self.eval(&while_stmt.body)?;
                 }
                 Ok(())
             }
             Stmt::Function(func) => {
-                let fun = UserFn::new(env.clone(), func.as_ref().clone());
-                env.borrow_mut()
+                let fun = UserFn::new(self.env.clone(), func.as_ref().clone());
+                self.env
+                    .borrow_mut()
                     .define(func.name.lexeme.clone(), Some(fun.into()));
                 Ok(())
             }
+            Stmt::Block(block) => self.exit_block(&block.statements, Environment::new(Some(self.env.clone()), None)),
             Stmt::Return(ret) => {
                 let value = match &ret.value {
-                    Some(expr) => self.eval(expr, env)?,
+                    Some(expr) => self.eval(expr)?,
                     None => Scalar::Nil,
                 };
                 InterpretRet!(value)

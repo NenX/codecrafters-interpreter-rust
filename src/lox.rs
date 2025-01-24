@@ -5,9 +5,10 @@ use bytes::Bytes;
 use crate::{
     environment::Environment,
     error::MyResult,
-    evaluator::{AstInterpreter, Evaluator, InterpretError},
+    evaluator::{Evaluator, InterpretError, Interprete},
     expr::Expr,
     parser::Parser,
+    resolver::{self, Resolver},
     scanner::Scanner,
     MyErr,
 };
@@ -19,9 +20,10 @@ impl Lox {
         let mut parser = Parser::new(scanner.tokens());
         let stmts = parser.parse();
         let mut evaluator = Evaluator::new();
-        let env = Environment::global_env();
+        let mut resolver = Resolver::new(&mut evaluator);
+        resolver.resolve_stmts(&stmts);
         for stmt in stmts {
-            let res = evaluator.eval(&stmt, env.clone());
+            let res = evaluator.eval(&stmt);
             if let Err(e) = res {
                 match e {
                     InterpretError::Runtime(msg) => return MyErr!(;msg),
@@ -39,15 +41,13 @@ impl Lox {
         parser.parse_expression()
     }
     pub fn evaluate(path: PathBuf) {
-        let env = Environment::new(None, None);
-
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         let expr = parser.parse_expression();
         let mut evaluator = Evaluator::new();
 
         if let Some(expr) = expr {
-            let result = evaluator.eval(&expr, env);
+            let result = evaluator.eval(&expr);
             if let Ok(sc) = result {
                 println!("{}", sc)
             }

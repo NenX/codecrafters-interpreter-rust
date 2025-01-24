@@ -39,9 +39,9 @@ impl Environment {
         self.values
             .insert(name.as_ref().to_string(), value.unwrap_or(Scalar::Nil));
     }
-    pub fn assign(&mut self, name: String, value: Scalar) -> Result<(), EnvironmentErr> {
-        if self.values.contains_key(&name) {
-            self.values.insert(name, value);
+    pub fn assign(&mut self, name: impl AsRef<str>, value: Scalar) -> Result<(), EnvironmentErr> {
+        if self.values.contains_key(name.as_ref()) {
+            self.values.insert(name.as_ref().to_string(), value);
             return Ok(());
         }
         match &self.enclosing {
@@ -49,9 +49,9 @@ impl Environment {
             None => Err(EnvironmentErr::AccessUndefined),
         }
     }
-    pub fn get(&self, name: &String) -> Result<Scalar, EnvironmentErr> {
-        if self.values.contains_key(name) {
-            return Ok(self.values.get(name).unwrap().clone());
+    pub fn get(&self, name: impl AsRef<str>) -> Result<Scalar, EnvironmentErr> {
+        if let Some(value) = self.values.get(name.as_ref()) {
+            return Ok(value.clone());
         }
         match &self.enclosing {
             Some(parent) => {
@@ -62,6 +62,41 @@ impl Environment {
             }
             None => Err(EnvironmentErr::AccessUndefined),
         }
+    }
+    pub fn ancestor(&self, distance: usize) -> Option<EnvironmentType> {
+        assert!(distance > 0);
+        if self.enclosing.is_none() {
+            return None;
+        }
+        let mut env: Rc<RefCell<Environment>> = self.enclosing.clone().unwrap();
+        for _ in 0..distance {
+            let _env: &RefCell<Environment> = env.borrow();
+            let _env: Rc<RefCell<Environment>> = _env.borrow_mut().enclosing.clone().unwrap();
+            env = _env;
+        }
+
+        Some(env)
+    }
+
+    pub fn get_at(&self, distance: usize, name: impl AsRef<str>) -> Result<Scalar, EnvironmentErr> {
+        if distance == 0 {
+            return self.get(name)
+        }
+        self.ancestor(distance).unwrap().borrow_mut().get(name)
+    }
+    pub fn assign_at(
+        &mut self,
+        distance: usize,
+        name: impl AsRef<str>,
+        value: Scalar,
+    ) -> Result<(), EnvironmentErr> {
+        if distance == 0 {
+            return self.assign(name, value);
+        }
+        self.ancestor(distance)
+            .unwrap()
+            .borrow_mut()
+            .assign(name, value)
     }
 }
 

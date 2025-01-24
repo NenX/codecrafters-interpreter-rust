@@ -4,7 +4,7 @@ use crate::{
     callable::Callable,
     data_types::scaler::Scalar,
     environment::{Environment, EnvironmentType},
-    evaluator::{AstInterpreter, Evaluator, InterpretError, InterpretResult},
+    evaluator::{Evaluator, InterpretError, InterpretResult, Interprete},
     stmt::{function::FunctionStmt, Stmt},
 };
 
@@ -40,7 +40,7 @@ impl Callable for UserFn {
             env_mut.define(token.lexeme.clone(), args.get(idx).cloned());
         }
         // let res = self.declaration.body.interpret(env.clone());
-        let res = evaluator.eval(&self.declaration.body, env.clone());
+        let res = evaluator.exit_block(&self.declaration.fn_body, env.clone());
         let ret = match res {
             Ok(_) => Scalar::Nil,
             Err(e) => match e {

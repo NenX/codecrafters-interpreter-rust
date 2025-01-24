@@ -185,7 +185,7 @@ impl Debug for Scalar {
             Scalar::Number(i) => format!("{:?}", i),
             Scalar::String(s) => s.clone(),
             Scalar::Nil => format!("nil"),
-            Scalar::Function(function_value) => todo!(),
+            Scalar::Function(function_value) => format!("fn {}", function_value.to_string()),
         };
         write!(f, "{}", s)
     }

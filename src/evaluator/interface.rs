@@ -1,7 +1,7 @@
 use crate::environment::EnvironmentType;
 
-pub trait AstInterpreter<T> {
+pub trait Interprete<T> {
     type Output;
-    fn eval(&mut self, value: &T, env: EnvironmentType) -> Self::Output;
+    fn eval(&mut self, value: &T,) -> Self::Output;
 }
 

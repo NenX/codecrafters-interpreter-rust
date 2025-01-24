@@ -5,6 +5,7 @@ pub mod lox;
 pub mod scanner;
 pub mod parser;
 pub mod evaluator;
+pub mod resolver;
 pub mod expr;
 pub mod stmt;
 pub mod token;
