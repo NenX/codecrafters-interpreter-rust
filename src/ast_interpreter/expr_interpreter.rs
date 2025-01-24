@@ -15,19 +15,3 @@ use super::{
     AstInterpreter,
 };
 
-impl AstInterpreter for Expr {
-    type Output = InterpretResult<Scalar>;
-
-    fn interpret(&self, env: EnvironmentType) -> Self::Output {
-        Evaluator::interpret_expr(self, env)
-    }
-    // fn interpret(&self, env: &mut Environment) -> Self::Output {
-    //     let scaler = match self.interpret_checked(env) {
-    //         Ok(sc) => {
-    //             sc
-    //         }
-    //         Err(e) => Scalar::Nil,
-    //     };
-    //     scaler
-    // }
-}

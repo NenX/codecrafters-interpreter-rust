@@ -3,9 +3,9 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::LazyLock};
 use bytes::Bytes;
 
 use crate::{
-    ast_interpreter::{interpret_err::InterpretError, AstInterpreter},
     environment::Environment,
     error::MyResult,
+    evaluator::{AstInterpreter, Evaluator, InterpretError},
     expr::Expr,
     parser::Parser,
     scanner::Scanner,
@@ -18,9 +18,10 @@ impl Lox {
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         let stmts = parser.parse();
+        let mut evaluator = Evaluator::new();
         let env = Environment::global_env();
         for stmt in stmts {
-            let res = stmt.interpret(env.clone());
+            let res = evaluator.eval(&stmt, env.clone());
             if let Err(e) = res {
                 match e {
                     InterpretError::Runtime(msg) => return MyErr!(;msg),
@@ -43,8 +44,10 @@ impl Lox {
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         let expr = parser.parse_expression();
+        let mut evaluator = Evaluator::new();
+
         if let Some(expr) = expr {
-            let result = expr.interpret(env);
+            let result = evaluator.eval(&expr, env);
             if let Ok(sc) = result {
                 println!("{}", sc)
             }

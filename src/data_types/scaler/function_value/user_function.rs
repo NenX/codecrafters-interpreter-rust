@@ -1,13 +1,10 @@
 use std::fmt::Display;
 
 use crate::{
-    ast_interpreter::{
-        interpret_err::{InterpretError, InterpretResult},
-        AstInterpreter,
-    },
     callable::Callable,
     data_types::scaler::Scalar,
     environment::{Environment, EnvironmentType},
+    evaluator::{AstInterpreter, Evaluator, InterpretError, InterpretResult},
     stmt::{function::FunctionStmt, Stmt},
 };
 
@@ -31,7 +28,7 @@ impl Callable for UserFn {
         format!("<fn {}>", name)
     }
 
-    fn call(&self, args: Vec<Scalar>) -> InterpretResult<Scalar> {
+    fn call(&self, evaluator: &mut Evaluator, args: Vec<Scalar>) -> InterpretResult<Scalar> {
         let env = Environment::new(
             Some(self.closure.clone()),
             Some(&self.declaration.name.lexeme),
@@ -42,7 +39,8 @@ impl Callable for UserFn {
 
             env_mut.define(token.lexeme.clone(), args.get(idx).cloned());
         }
-        let res = self.declaration.body.interpret(env.clone());
+        // let res = self.declaration.body.interpret(env.clone());
+        let res = evaluator.eval(&self.declaration.body, env.clone());
         let ret = match res {
             Ok(_) => Scalar::Nil,
             Err(e) => match e {

@@ -6,15 +6,3 @@ use crate::{
     InterpretRet,
 };
 
-use super::{
-    interpret_err::{InterpretError, InterpretResult},
-    AstInterpreter,
-};
-
-impl AstInterpreter for Stmt {
-    type Output = InterpretResult<()>;
-
-    fn interpret(&self, env: EnvironmentType) -> Self::Output {
-        Evaluator::interpret_stmt(self, env)
-    }
-}

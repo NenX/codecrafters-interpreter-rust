@@ -1,5 +1,6 @@
 use crate::{
-    ast_interpreter::interpret_err::InterpretResult, data_types::scaler::Scalar, error::MyResult,
+   data_types::scaler::Scalar, error::MyResult,
+    evaluator::{Evaluator, InterpretResult},
 };
 
 pub trait Callable {
@@ -8,7 +9,7 @@ pub trait Callable {
     }
     fn arity(&self) -> usize;
 
-    fn call(&self, args: Vec<Scalar>) -> InterpretResult<Scalar>;
+    fn call(&self, evaluator: &mut Evaluator, args: Vec<Scalar>) -> InterpretResult<Scalar>;
 }
 
 struct A;

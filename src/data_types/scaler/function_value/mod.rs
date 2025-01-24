@@ -4,8 +4,8 @@ pub use native_function::*;
 pub use user_function::*;
 
 use crate::{
-    ast_interpreter::interpret_err::InterpretResult, callable::Callable,
-    environment::EnvironmentType, error::MyResult,
+    callable::Callable,
+    evaluator::{Evaluator, InterpretResult},
 };
 
 use super::Scalar;
@@ -26,10 +26,10 @@ impl From<NativeFn> for FunctionValue {
     }
 }
 impl Callable for FunctionValue {
-    fn call(&self, args: Vec<Scalar>) -> InterpretResult<Scalar> {
+    fn call(&self, evaluator: &mut Evaluator, args: Vec<Scalar>) -> InterpretResult<Scalar> {
         match self {
-            FunctionValue::User(user_fn) => user_fn.call(args),
-            FunctionValue::Native(native_fn) => native_fn.call(args),
+            FunctionValue::User(user_fn) => user_fn.call(evaluator, args),
+            FunctionValue::Native(native_fn) => native_fn.call(evaluator, args),
         }
     }
     fn to_string(&self) -> String {

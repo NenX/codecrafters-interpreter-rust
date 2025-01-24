@@ -1,10 +1,10 @@
 use std::time::SystemTime;
 
 use crate::{
-    ast_interpreter::interpret_err::{InterpretError, InterpretResult},
     callable::Callable,
     data_types::scaler::Scalar,
     error::MyResult,
+    evaluator::{Evaluator, InterpretResult},
     InterpretRet,
 };
 
@@ -16,7 +16,7 @@ pub enum NativeFn {
 }
 
 impl Callable for NativeFn {
-    fn call(&self, args: Vec<Scalar>) -> InterpretResult<Scalar> {
+    fn call(&self, evaluator: &mut Evaluator, args: Vec<Scalar>) -> InterpretResult<Scalar> {
         let duration = SystemTime::now()
             .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap();
@@ -26,11 +26,8 @@ impl Callable for NativeFn {
         };
         Ok(value)
     }
-    
+
     fn arity(&self) -> usize {
         0
     }
-
 }
-
-
