@@ -4,7 +4,7 @@ use super::Expr;
 
 #[derive(Clone, Debug)]
 pub struct LogicalExpr {
-    pub letf: Expr,
+    pub left: Expr,
     pub right: Expr,
     pub operator: Token,
 }

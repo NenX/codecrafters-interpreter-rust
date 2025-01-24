@@ -325,7 +325,7 @@ impl Parser {
         let mut expr = self.and()?;
         while let Some(x) = self.match_advance_unchecked([OR]) {
             expr = LogicalExpr {
-                letf: expr,
+                left: expr,
                 right: self.and()?,
                 operator: x,
             }
@@ -338,7 +338,7 @@ impl Parser {
 
         while let Some(x) = self.match_advance_unchecked([AND]) {
             expr = LogicalExpr {
-                letf: expr,
+                left: expr,
                 right: self.equality()?,
                 operator: x,
             }
@@ -352,7 +352,7 @@ impl Parser {
 
         while let Some(operator) = self.match_advance_unchecked([EqualEqual, BangEqual]) {
             expr = BinaryExpr {
-                letf: expr,
+                left: expr,
                 operator,
                 right: self.comparision()?,
             }
@@ -368,7 +368,7 @@ impl Parser {
             self.match_advance_unchecked([GREATER, GreaterEqual, LESS, LessEqual])
         {
             expr = BinaryExpr {
-                letf: expr,
+                left: expr,
                 operator,
                 right: self.term()?,
             }
@@ -382,7 +382,7 @@ impl Parser {
 
         while let Some(operator) = self.match_advance_unchecked([PLUS, MINUS]) {
             expr = BinaryExpr {
-                letf: expr,
+                left: expr,
                 operator,
                 right: self.factor()?,
             }
@@ -397,7 +397,7 @@ impl Parser {
 
         while let Some(operator) = self.match_advance_unchecked([SLASH, STAR]) {
             expr = BinaryExpr {
-                letf: expr,
+                left: expr,
                 operator,
                 right: self.unary()?,
             }

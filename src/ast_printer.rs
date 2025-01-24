@@ -9,7 +9,7 @@ impl AstPrinter for Expr {
         match self {
             Expr::Binary(binary) => {
                 let BinaryExpr {
-                    letf,
+                    left: letf,
                     right,
                     operator: opertor,
                 } = binary.as_ref();
