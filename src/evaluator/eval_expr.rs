@@ -82,13 +82,7 @@ impl Interprete<Expr> for Evaluator {
             },
             Expr::Variable(variable) => {
                 let name = &variable.name.lexeme;
-                let distance = self.get_depth(expr);
-
-                let value = if let Some(distance) = distance {
-                    self.env.borrow().get_at(distance, name)
-                } else {
-                    self.global.borrow().get(name)
-                };
+                let value = self.get_variable_value(expr, name);
                 match value {
                     Ok(value) => Ok(value.clone()),
                     Err(_) => {
@@ -103,18 +97,8 @@ impl Interprete<Expr> for Evaluator {
             Expr::Assign(assign) => {
                 let value = self.eval(&assign.value)?;
                 let name = &assign.name.lexeme;
-                let distance = self.get_depth(expr);
-                let result = if let Some(distance) = distance {
-                    self.env
-                        .borrow_mut()
-                        .assign_at(distance, name, value.clone())
-                } else {
-                    self.global.borrow_mut().assign(name, value.clone())
-                };
-                // let result = env
-                //     .borrow_mut()
-                //     .assign(name, value.clone());
-                match result {
+
+                match self.assign_variable(expr, name, value.clone()) {
                     Ok(_) => Ok(value),
                     Err(_) => {
                         report_runtime(

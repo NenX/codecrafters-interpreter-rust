@@ -10,6 +10,7 @@ use codecrafters_interpreter::lox::Lox;
 
 fn main() {
     let x = ArgsParser::parse();
+    let resolver = x.resolver.unwrap_or(false);
     match x.cmds {
         Cmd::Tokenize { file } => {
             Lox::tokenize(file).print_tokens();
@@ -27,7 +28,7 @@ fn main() {
             Lox::evaluate(file);
         }
         Cmd::Run { file } => {
-            let res = Lox::run_file(file);
+            let res = Lox::run_file(file, resolver);
         }
     }
     unsafe {

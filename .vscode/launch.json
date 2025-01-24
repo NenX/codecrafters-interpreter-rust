@@ -14,10 +14,15 @@
                     "--bin=codecrafters-interpreter",
                     "--package=codecrafters-interpreter"
                 ],
+                "env": {
+                    "RUST_BACKTRACE": "1"
+                }
             },
             "args": [
+                "--resolver",
+                "true",
                 "run",
-                "test.lox"
+                "test.lox",
             ],
             "cwd": "${workspaceFolder}"
         },

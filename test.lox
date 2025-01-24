@@ -1,17 +1,17 @@
- // This program demonstrates the use of closures to create a counter function.
- // The inner function count() needs access to the outer function's local variable i.
- // This can be achieved using closures.
- fun makeCounter() {
-   var i = 0;
-   fun count() {
-     i = i + 2;
-     print i;
-   }
- 
-   return count;
- }
- 
- var counter = makeCounter();
- counter();
- counter();
+{
+  var threshold = 50;
 
+  fun isEven(n) {
+    if (n == 0) return true;
+    if (n > threshold) return false;
+    return isOdd(n - 1);
+  }
+
+  fun isOdd(n) {
+    if (n == 0) return false;
+    if (n > threshold) return false;
+    return isEven(n - 1);
+  }
+
+  print isEven(25);
+}

@@ -38,17 +38,17 @@ impl Environment {
         self.values
             .insert(name.as_ref().to_string(), value.unwrap_or(Scalar::Nil));
     }
-    pub fn assign(&mut self, name: impl AsRef<str>, value: Scalar) -> Result<(), EnvironmentErr> {
+    pub fn assign(&mut self, name: impl AsRef<str>, value: Scalar) -> Result<(), EnvErr> {
         if self.values.contains_key(name.as_ref()) {
             self.values.insert(name.as_ref().to_string(), value);
             return Ok(());
         }
         match &self.enclosing {
             Some(parent) => parent.borrow_mut().assign(name, value),
-            None => Err(EnvironmentErr::AccessUndefined),
+            None => Err(EnvErr::AccessUndefined),
         }
     }
-    pub fn get(&self, name: impl AsRef<str>) -> Result<Scalar, EnvironmentErr> {
+    pub fn get(&self, name: impl AsRef<str>) -> Result<Scalar, EnvErr> {
         if let Some(value) = self.values.get(name.as_ref()) {
             return Ok(value.clone());
         }
@@ -59,7 +59,7 @@ impl Environment {
                 let b = a.borrow();
                 b.get(name)
             }
-            None => Err(EnvironmentErr::AccessUndefined),
+            None => Err(EnvErr::AccessUndefined),
         }
     }
     pub fn ancestor(&self, distance: usize) -> Option<EnvironmentType> {
@@ -75,7 +75,7 @@ impl Environment {
         Some(env)
     }
 
-    pub fn get_at(&self, distance: usize, name: impl AsRef<str>) -> Result<Scalar, EnvironmentErr> {
+    pub fn get_at(&self, distance: usize, name: impl AsRef<str>) -> Result<Scalar, EnvErr> {
         if distance == 0 {
             return self.get(name)
         }
@@ -86,7 +86,7 @@ impl Environment {
         distance: usize,
         name: impl AsRef<str>,
         value: Scalar,
-    ) -> Result<(), EnvironmentErr> {
+    ) -> Result<(), EnvErr> {
         if distance == 0 {
             return self.assign(name, value);
         }
@@ -98,13 +98,13 @@ impl Environment {
 }
 
 #[derive(Debug)]
-pub enum EnvironmentErr {
+pub enum EnvErr {
     AssignUndefined,
     AccessUndefined,
 }
-impl Display for EnvironmentErr {
+impl Display for EnvErr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
 }
-impl Error for EnvironmentErr {}
+impl Error for EnvErr {}

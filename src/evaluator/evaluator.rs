@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use crate::{
-    callable::Callable,
     data_types::scaler::Scalar,
-    environment::{Environment, EnvironmentType},
+    environment::{EnvErr, Environment, EnvironmentType},
     error::report_runtime,
     expr::Expr,
     stmt::Stmt,
@@ -17,37 +16,65 @@ pub struct Evaluator {
     pub(crate) locals: HashMap<*const Expr, usize>,
     pub(crate) env: EnvironmentType,
     pub(crate) global: EnvironmentType,
+    pub(crate) resolver: bool,
 }
 
 impl Default for Evaluator {
     fn default() -> Self {
-        Self::new()
+        Self::new(false)
     }
 }
 
 impl Evaluator {
-    pub fn new() -> Self {
+    pub fn new(resolver: bool) -> Self {
         let global = Environment::global_env();
         Self {
             locals: HashMap::new(),
             env: global.clone(),
             global,
+            resolver,
         }
     }
-    pub fn resolve(&mut self, expr: &Expr, depth: usize) {
+    pub(crate) fn resolve(&mut self, expr: &Expr, depth: usize) {
         self.locals.insert(expr, depth);
     }
-    pub fn get_depth(&self, expr: &Expr) -> Option<usize> {
+    pub(crate) fn get_depth(&self, expr: &Expr) -> Option<usize> {
         let ptr = expr as *const Expr;
         let result = self.locals.get(&ptr).copied();
         result
     }
-    pub fn eval_block(
+    pub(crate) fn assign_variable(
+        &mut self,
+        expr: &Expr,
+        name: &str,
+        value: Scalar,
+    ) -> Result<(), EnvErr> {
+        if !self.resolver {
+            return self.env.borrow_mut().assign(name, value);
+        }
+        let distance = self.get_depth(expr);
+        if let Some(distance) = distance {
+            self.env.borrow_mut().assign_at(distance, name, value)
+        } else {
+            self.global.borrow_mut().assign(name, value)
+        }
+    }
+    pub(crate) fn get_variable_value(&mut self, expr: &Expr, name: &str) -> Result<Scalar, EnvErr> {
+        if !self.resolver {
+            return self.env.borrow().get(name);
+        }
+        let distance = self.get_depth(expr);
+        if let Some(distance) = distance {
+            self.env.borrow().get_at(distance, name)
+        } else {
+            self.global.borrow().get(name)
+        }
+    }
+    pub(crate) fn eval_block(
         &mut self,
         statments: &Vec<Stmt>,
         new_env: EnvironmentType,
     ) -> InterpretResult<()> {
-    
         let old_env = self.env.clone();
         self.env = new_env;
         // 使用闭包来捕获环境, 防止环境无法恢复

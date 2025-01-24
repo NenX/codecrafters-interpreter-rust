@@ -4,6 +4,8 @@ use std::path::PathBuf;
 pub struct ArgsParser {
     #[command(subcommand)]
     pub cmds: Cmd,
+    #[arg(short, long,)]
+    pub resolver: Option<bool>,
 }
 
 #[derive(clap::Subcommand)]
