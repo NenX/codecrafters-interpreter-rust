@@ -15,7 +15,6 @@ use crate::{
 pub struct Lox {}
 impl Lox {
     pub fn run_file(path: PathBuf, resolver: bool) -> MyResult<()> {
-        println!("resolver {:?}", resolver);
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         let stmts = parser.parse();
