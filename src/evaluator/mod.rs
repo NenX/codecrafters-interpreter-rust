@@ -125,7 +125,8 @@ impl Evaluator {
                 for arg in &call.arguments {
                     args.push(Self::interpret_expr(arg, env.clone())?);
                 }
-                callee
+
+                let function = callee
                     .as_fun()
                     .ok_or_else(|| {
                         report_runtime(
@@ -133,8 +134,22 @@ impl Evaluator {
                             "Can only call functions and classes.".to_string(),
                         );
                         InterpretError::rt("Can only call functions and classes.")
-                    })?
-                    .call(args)
+                    })?;
+
+                // Check if number of arguments matches
+                if args.len() != function.arity() {
+                    report_runtime(
+                        call.parent.line,
+                        format!(
+                            "Expected {} arguments but got {}.",
+                            function.arity(),
+                            args.len()
+                        ),
+                    );
+                    return InterpretRtErr!(;"wrong number of arguments");
+                }
+
+                function.call(args)
             }
         }
     }

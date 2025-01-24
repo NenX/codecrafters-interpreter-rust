@@ -1,7 +1,4 @@
-use std::cell::Ref;
-use std::cell::RefCell;
 use std::process;
-use std::rc::Rc;
 
 use clap::Parser;
 use codecrafters_interpreter::ast_printer::AstPrinter;
@@ -20,10 +17,10 @@ fn main() {
         Cmd::Parse { file } => {
             let opt = Lox::parse(file);
 
-            opt.and_then(|expr| {
+            opt.map(|expr| {
                 let s = expr.print(true);
                 println!("{}", s);
-                Some(s)
+                s
             });
         }
         Cmd::Evaluate { file } => {

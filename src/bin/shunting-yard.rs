@@ -56,8 +56,8 @@ impl Lexer {
 
 fn expr(input: &str) -> S {
     let mut lexer = Lexer::new(input);
-    let res = expr_bp(&mut lexer).unwrap();
-    res
+    
+    expr_bp(&mut lexer).unwrap()
 }
 
 struct Frame {
