@@ -44,14 +44,3 @@ fn main() {
     }
 }
 
-struct A {
-    pub age: i32,
-}
-#[test]
-fn aa() {
-    let a = Rc::new(RefCell::new(A { age: 12 }));
-    let b = a.clone();
-    let c = a.clone();
-    c.borrow_mut().age = 33;
-    println!("a {}", a.borrow().age)
-}
