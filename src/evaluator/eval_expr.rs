@@ -1,15 +1,10 @@
-use std::collections::HashMap;
 
 use crate::{
     callable::Callable,
-    data_types::scaler::{Scalar, UserFn},
-    environment::{Environment, EnvironmentType},
+    data_types::scaler::Scalar,
     error::report_runtime,
     expr::{binary::BinaryExpr, Expr},
-    stmt::Stmt,
-    token::Token,
-    token_type::TokenType,
-    InterpretRet, InterpretRtErr,
+    token_type::TokenType, InterpretRtErr,
 };
 
 use super::{error::InterpretResult, Evaluator, InterpretError, Interprete};

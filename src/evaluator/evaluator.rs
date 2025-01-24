@@ -2,14 +2,12 @@ use std::collections::HashMap;
 
 use crate::{
     callable::Callable,
-    data_types::scaler::{Scalar, UserFn},
+    data_types::scaler::Scalar,
     environment::{Environment, EnvironmentType},
     error::report_runtime,
-    expr::{binary::BinaryExpr, Expr},
+    expr::Expr,
     stmt::Stmt,
-    token::Token,
-    token_type::TokenType,
-    InterpretRet, InterpretRtErr,
+    token::Token, InterpretRtErr,
 };
 
 use super::{error::InterpretResult, InterpretError, Interprete};
