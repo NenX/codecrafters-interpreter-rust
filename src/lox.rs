@@ -27,9 +27,12 @@ impl Lox {
             let res = evaluator.eval(&stmt);
             if let Err(e) = res {
                 match e {
-                    InterpretError::Runtime(msg) => return MyErr!(;msg),
+                    InterpretError::Runtime(msg) => {
+                        eprintln!("[runtime err] {}", msg);
+                        return MyErr!(;msg)
+                    },
                     _ => {
-                        println!("stmt err {:?}", e)
+                        eprintln!("[stmt err] {:?}", e)
                     }
                 }
             }

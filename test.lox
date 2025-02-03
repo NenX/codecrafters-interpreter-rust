@@ -1,17 +1,26 @@
-{
-  var threshold = 50;
-
-  fun isEven(n) {
-    if (n == 0) return true;
-    if (n > threshold) return false;
-    return isOdd(n - 1);
-  }
-
-  fun isOdd(n) {
-    if (n == 0) return false;
-    if (n > threshold) return false;
-    return isEven(n - 1);
-  }
-
-  print isEven(25);
+fun sayAge() {
+  print this.age;
 }
+
+class Person {
+  sayName() {
+    print this.name;
+  }
+}
+
+var jane = Person();
+jane.name = "Jane";
+jane.sayName(); // Jane
+jane.sayAge = sayAge;
+jane.sayAge(); // 20
+var bill = Person();
+bill.name = "Bill";
+bill.sayName(); // Bill
+
+bill.sayName = jane.sayName;
+bill.sayName(); // Jane
+fun sayAge() {
+  print this.age;
+}
+bill.sayAge = sayAge;
+bill.sayAge(); // 20

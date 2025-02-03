@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::{
     callable::Callable,
-    data_types::scaler::Scalar,
+    data_types::scaler::{InstanceValue, Scalar},
     environment::{Environment, EnvironmentType},
     evaluator::{Evaluator, InterpretError, InterpretResult},
     stmt::function::FunctionStmt,
@@ -13,13 +13,21 @@ use crate::{
 
 pub struct UserFn {
     closure: EnvironmentType,
-    declaration: Rc<Box<FunctionStmt>>,
+    declaration: Rc<FunctionStmt>,
 }
 impl UserFn {
-    pub fn new(env: EnvironmentType, delc: Rc<Box<FunctionStmt>>) -> Self {
+    pub fn new(env: EnvironmentType, delc: Rc<FunctionStmt>) -> Self {
         Self {
             closure: env,
             declaration: delc,
+        }
+    }
+    pub fn bind(&self, instance: &InstanceValue) -> Self {
+        let mut env = self.closure.borrow_mut();
+        env.define("this", Some(instance.clone().into()));
+        Self {
+            closure: self.closure.clone(),
+            declaration: self.declaration.clone(),
         }
     }
 }
@@ -56,3 +64,4 @@ impl Callable for UserFn {
         self.declaration.params.len()
     }
 }
+

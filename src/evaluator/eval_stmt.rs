@@ -1,13 +1,13 @@
+use std::rc::Rc;
 
 use crate::{
-    data_types::scaler::{Scalar, UserFn},
+    data_types::scaler::{ClassValue, FunctionValue, Scalar, UserFn},
     environment::Environment,
     stmt::Stmt,
     InterpretRet,
 };
 
 use super::{error::InterpretResult, Evaluator, InterpretError, Interprete};
-
 
 impl Interprete<Stmt> for Evaluator {
     type Output = InterpretResult<()>;
@@ -52,20 +52,35 @@ impl Interprete<Stmt> for Evaluator {
                 Ok(())
             }
             Stmt::Function(func) => {
-                let name = func.name.lexeme.clone();
+                let name = &func.name.lexeme;
                 let fun = UserFn::new(self.env.clone(), func.clone());
-                self.env
-                    .borrow_mut()
-                    .define(name, Some(fun.into()));
+                self.env.borrow_mut().define(name, Some(fun.into()));
                 Ok(())
             }
-            Stmt::Block(block) => self.eval_block(&block.statements, Environment::new(Some(self.env.clone()), None)),
+            Stmt::Block(block) => self.eval_block(
+                &block.statements,
+                Environment::new(Some(self.env.clone()), None),
+            ),
             Stmt::Return(ret) => {
                 let value = match &ret.value {
                     Some(expr) => self.eval(expr)?,
                     None => Scalar::Nil,
                 };
                 InterpretRet!(value)
+            }
+            Stmt::Class(class) => {
+                let name = &class.name.lexeme;
+                let mut class_value = ClassValue::new(name);
+
+                for function in &class.methods {
+                    let fun = UserFn::new(self.env.clone(), function.clone());
+                    class_value
+                        .methods
+                        .insert(function.name.lexeme.clone(), fun);
+                }
+
+                self.env.borrow_mut().define(name, Some(class_value.into()));
+                Ok(())
             }
         }
     }

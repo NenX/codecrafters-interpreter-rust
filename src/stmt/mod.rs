@@ -1,7 +1,7 @@
-
 use std::rc::Rc;
 
 use block::BlockStmt;
+use class_stmt::ClassStmt;
 use expression::ExpressionStmt;
 use function::FunctionStmt;
 use if_stmt::IfStmt;
@@ -11,6 +11,7 @@ use var::VarStmt;
 use while_stmt::WhileStmt;
 
 pub mod block;
+pub mod class_stmt;
 pub mod expression;
 pub mod function;
 pub mod if_stmt;
@@ -27,8 +28,9 @@ pub enum Stmt {
     Print(Box<PrintStmt>),
     If(Box<IfStmt>),
     While(Box<WhileStmt>),
-    Function(Rc<Box<FunctionStmt>>), // 使用 Rc 避免 Clone 函数
+    Function(Rc<FunctionStmt>), // 使用 Rc 避免 Clone 函数
     Return(Box<ReturnStmt>),
+    Class(ClassStmt),
 }
 impl Stmt {
     pub fn as_function(&self) -> Option<&FunctionStmt> {
@@ -70,7 +72,7 @@ impl From<WhileStmt> for Stmt {
 }
 impl From<FunctionStmt> for Stmt {
     fn from(value: FunctionStmt) -> Self {
-        Self::Function(Rc::new(Box::new(value)))
+        Self::Function(Rc::new(value))
     }
 }
 impl From<ReturnStmt> for Stmt {
@@ -78,6 +80,8 @@ impl From<ReturnStmt> for Stmt {
         Self::Return(value.into())
     }
 }
-
-
-
+impl From<ClassStmt> for Stmt {
+    fn from(value: ClassStmt) -> Self {
+        Self::Class(value)
+    }
+}

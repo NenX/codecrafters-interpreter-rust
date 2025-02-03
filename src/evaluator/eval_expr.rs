@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{
     callable::Callable,
     data_types::scaler::Scalar,
@@ -82,13 +84,13 @@ impl Interprete<Expr> for Evaluator {
             },
             Expr::Variable(variable) => {
                 let name = &variable.name.lexeme;
-                let value = self.get_variable_value(expr, name);
+                let value = self.lookup_variable(expr, name);
                 match value {
                     Ok(value) => Ok(value.clone()),
                     Err(_) => {
                         report_runtime(
                             variable.name.line,
-                            format!("Access undefined variable '{}'.", variable.name.lexeme),
+                            format!("Access undefined variable '{}'.", name),
                         );
                         InterpretRtErr!(;"bad variable access")
                     }
@@ -103,7 +105,7 @@ impl Interprete<Expr> for Evaluator {
                     Err(_) => {
                         report_runtime(
                             assign.name.line,
-                            format!("Assign to undefined variable '{}'.", assign.name.lexeme),
+                            format!("Assign to undefined variable '{}'.", name),
                         );
                         InterpretRtErr!(;"bad variable assign")
                     }
@@ -125,7 +127,7 @@ impl Interprete<Expr> for Evaluator {
                     args.push(self.eval(arg)?);
                 }
 
-                let function = callee.as_fun().ok_or_else(|| {
+                let function = callee.as_callable().ok_or_else(|| {
                     report_runtime(
                         call.parent.line,
                         "Can only call functions and classes.".to_string(),
@@ -147,6 +149,40 @@ impl Interprete<Expr> for Evaluator {
                 }
 
                 function.call(self, args)
+            }
+            Expr::Get(get) => {
+                let object = self.eval(&get.object)?;
+                let instance = object.as_instance();
+                if let Some(instance) = instance {
+                    instance.borrow().get(&get.name)
+                } else {
+                    report_runtime(get.name.line, "Only instances have properties.".to_string());
+                    InterpretRtErr!(;"bad get")
+                }
+            }
+            Expr::Set(set) => {
+                let object = self.eval(&set.object)?;
+                let value = self.eval(&set.value)?;
+                let instance = object.as_instance();
+                if let Some(instance) = &instance {
+                    // instance.set(name, value.clone());
+                    instance.borrow_mut().set(&set.name, value.clone());
+                    Ok(value)
+                } else {
+                    report_runtime(set.name.line, "Only instances have properties.".to_string());
+                    InterpretRtErr!(;"bad set")
+                }
+            }
+            Expr::This(this) => {
+                let name = &this.keyword.lexeme;
+                let value = self.lookup_variable(expr, name);
+                match value {
+                    Ok(value) => Ok(value.clone()),
+                    Err(_) => {
+                        report_runtime(this.keyword.line, "Undefined variable 'this'.".to_string());
+                        InterpretRtErr!(;"bad this")
+                    }
+                }
             }
         }
     }

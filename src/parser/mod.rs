@@ -1,15 +1,18 @@
 pub mod parse_error;
 
+use std::rc::Rc;
 
 use crate::{
     error::{my_error_token, MyResult},
     expr::{
-        assign::AssignExpr, binary::BinaryExpr, call::CallExpr, grouping::GroupingExpr,
-        literal::LiteralExpr, logical::LogicalExpr, unary::UnaryExpr, variable::VariableExpr, Expr,
+        assign::AssignExpr, binary::BinaryExpr, call::CallExpr, get::GetExpr,
+        grouping::GroupingExpr, literal::LiteralExpr, logical::LogicalExpr, set::SetExpr,
+        this::ThisExpr, unary::UnaryExpr, variable::VariableExpr, Expr,
     },
     stmt::{
-        block::BlockStmt, expression::ExpressionStmt, function::FunctionStmt, if_stmt::IfStmt,
-        print::PrintStmt, return_stmt::ReturnStmt, var::VarStmt, while_stmt::WhileStmt, Stmt,
+        block::BlockStmt, class_stmt::ClassStmt, expression::ExpressionStmt,
+        function::FunctionStmt, if_stmt::IfStmt, print::PrintStmt, return_stmt::ReturnStmt,
+        var::VarStmt, while_stmt::WhileStmt, Stmt,
     },
     token::Token,
     token_type::{CmpTokenType, TokenType},
@@ -17,34 +20,7 @@ use crate::{
 };
 use parse_error::ParseError;
 use TokenType::*;
-/*
-program        -> declaration* EOF
-declaration    -> funDecl | varDecl | statement
-funDecl        ->  "fun" function ;
-function       ->  IDENTIFIER "(" parameters? ")" block
-parameters     ->  IDENTIFIER ( "," IDENTIFIER )*
-varDecl        -> "var" IDENTIFIER ( "=" expression )? ";"
-statement      -> exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block
-ifStmt         -> "if" "(" expression ")" statement ( "else" statement )?
-whileStmt      -> "while" "(" expression ")" statement
-forStmt        -> "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement
-block          -> "{" declaration* "}"
-exprStmt       -> expression ";"
-printStmt      -> "print" expression ";"
-returnStmt     -> "return" expression? ";"
-expression     -> assignment
-assignment     -> IDENTIFIER "=" assignment | logic_or
-logic_or       -> logic_and ( "or" logic_and )*
-logic_and      -> equality ( "and" equality )*
-equality       -> comparision ( ( "!=" | "==" ) comparision )*
-comparision    -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
-term           -> factor ( ( "+" | "-" ) factor )*
-factor         -> unary ( ( "*" | "/" ) unary )*
-unary          -> ( "!" | "-" )* unary | call
-call           -> primary ( "(" arguments? ")" )*
-arguments      -> expression ( "," expression )*
-primary        -> STRING | NUMBER | "false" | "true" | "nil" | "(" expression ")"
-*/
+
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
@@ -116,15 +92,29 @@ impl Parser {
         }
     }
     fn declaration(&mut self) -> MyResult<Stmt> {
+        if self.match_advance_unchecked([CLASS]).is_some() {
+            return self.class_declaration();
+        };
         if self.match_advance_unchecked([FUN]).is_some() {
-            return self.function_declaration();
+            return Ok(self.function_declaration()?.into());
         };
         if self.match_advance_unchecked([VAR]).is_some() {
             return self.var_declaration();
         };
         self.statement()
     }
-    fn function_declaration(&mut self) -> MyResult<Stmt> {
+    fn class_declaration(&mut self) -> MyResult<Stmt> {
+        let name = self.consume(IDENTIFIER(String::new()), "")?;
+        self.consume(LeftBrace, "Expect '{' after class name.")?;
+        let mut methods = vec![];
+        while !self.check_unchecked([&RightBrace]) {
+            methods.push(Rc::new(self.function_declaration()?));
+        }
+        self.consume(RightBrace, "Expect '}' after class body.")?;
+        Ok(ClassStmt { name, methods }.into())
+    }
+
+    fn function_declaration(&mut self) -> MyResult<FunctionStmt> {
         let name = self.consume(IDENTIFIER(String::new()), "")?;
         let _ = self.consume(LeftParen, "")?;
         let mut params = vec![];
@@ -146,8 +136,7 @@ impl Parser {
             name,
             params,
             fn_body,
-        }
-        .into())
+        })
     }
     fn var_declaration(&mut self) -> MyResult<Stmt> {
         let name = self.consume(IDENTIFIER(String::new()), "")?;
@@ -312,11 +301,20 @@ impl Parser {
     fn assignment(&mut self) -> MyResult<Expr> {
         let expr = self.or()?;
         if let Some(equal) = self.match_advance_unchecked([EQUAL]) {
+            let value = self.assignment()?;
             match expr {
                 Expr::Variable(variable_expr) => {
                     return Ok(AssignExpr {
                         name: variable_expr.name,
-                        value: self.assignment()?,
+                        value,
+                    }
+                    .into())
+                }
+                Expr::Get(get_expr) => {
+                    return Ok(SetExpr {
+                        object: get_expr.object,
+                        name: get_expr.name,
+                        value,
                     }
                     .into())
                 }
@@ -427,8 +425,25 @@ impl Parser {
     fn call(&mut self) -> MyResult<Expr> {
         let mut expr = self.primary()?;
 
-        while self.match_advance_unchecked([LeftParen]).is_some() {
-            expr = self.finish_call(expr)?;
+        // while self.match_advance_unchecked([LeftParen]).is_some() {
+        //     expr = self.finish_call(expr)?;
+        // }
+        loop {
+            let next = self.peek_unchecked();
+            if next.t_type == LeftParen {
+                self.current += 1;
+                expr = self.finish_call(expr)?;
+            } else if next.t_type == DOT {
+                self.current += 1;
+                expr = GetExpr {
+                    object: expr,
+                    name: self
+                        .consume(IDENTIFIER(String::new()), "Expect property name after '.'.")?,
+                }
+                .into();
+            } else {
+                break;
+            }
         }
         Ok(expr)
     }
@@ -468,7 +483,10 @@ impl Parser {
                 GroupingExpr::from(expr).into()
             }
             IDENTIFIER(_) => VariableExpr { name: next }.into(),
-            _ => return MyErr!(,ParseError::NotExpected(next, "Expect expression.".to_string())),
+            THIS => ThisExpr { keyword: next }.into(),
+            _ => {
+                return MyErr!(,ParseError::NotExpected(next, "[Parser] Expect expression.".to_string()))
+            }
         };
         Ok(expr)
     }

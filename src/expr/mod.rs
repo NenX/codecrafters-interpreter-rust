@@ -1,18 +1,24 @@
 use assign::AssignExpr;
 use binary::BinaryExpr;
 use call::CallExpr;
+use get::GetExpr;
 use grouping::GroupingExpr;
 use literal::LiteralExpr;
 use logical::LogicalExpr;
+use set::SetExpr;
+use this::ThisExpr;
 use unary::UnaryExpr;
 use variable::VariableExpr;
 
 pub mod assign;
 pub mod binary;
 pub mod call;
+pub mod get;
 pub mod grouping;
 pub mod literal;
 pub mod logical;
+pub mod set;
+pub mod this;
 pub mod unary;
 pub mod variable;
 
@@ -26,6 +32,9 @@ pub enum Expr {
     Literal(Box<LiteralExpr>),
     Call(Box<CallExpr>),
     Unary(Box<UnaryExpr>),
+    Get(Box<GetExpr>),
+    Set(Box<SetExpr>),
+    This(Box<ThisExpr>),
 }
 impl From<BinaryExpr> for Expr {
     fn from(value: BinaryExpr) -> Self {
@@ -65,5 +74,20 @@ impl From<LogicalExpr> for Expr {
 impl From<CallExpr> for Expr {
     fn from(value: CallExpr) -> Self {
         Self::Call(value.into())
+    }
+}
+impl From<GetExpr> for Expr {
+    fn from(value: GetExpr) -> Self {
+        Self::Get(value.into())
+    }
+}
+impl From<SetExpr> for Expr {
+    fn from(value: SetExpr) -> Self {
+        Self::Set(value.into())
+    }
+}
+impl From<ThisExpr> for Expr {
+    fn from(value: ThisExpr) -> Self {
+        Self::This(value.into())
     }
 }

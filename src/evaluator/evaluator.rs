@@ -59,7 +59,7 @@ impl Evaluator {
             self.global.borrow_mut().assign(name, value)
         }
     }
-    pub(crate) fn get_variable_value(&mut self, expr: &Expr, name: &str) -> Result<Scalar, EnvErr> {
+    pub(crate) fn lookup_variable(&mut self, expr: &Expr, name: &str) -> Result<Scalar, EnvErr> {
         if !self.resolver {
             return self.env.borrow().get(name);
         }

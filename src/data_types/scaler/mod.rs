@@ -1,12 +1,14 @@
 use std::{
-    fmt::{Debug, Display},
-    ops::{Add, Div, Mul, Neg, Not, Sub},
+    cell::RefCell, fmt::{Debug, Display}, ops::{Add, Div, Mul, Neg, Not, Sub}, rc::Rc
 };
+mod class_value;
 mod function_value;
-
-pub use function_value::*;
+mod instance_value;
 
 use crate::callable::Callable;
+pub use class_value::*;
+pub use function_value::*;
+pub use instance_value::*;
 
 // #[derive(Clone, PartialEq, PartialOrd)]
 pub enum Scalar {
@@ -14,6 +16,8 @@ pub enum Scalar {
     Number(f64),
     String(String),
     Function(FunctionValue),
+    Class(ClassValue),
+    Instance(Rc<RefCell<InstanceValue>>),
     Nil,
 }
 impl Clone for Scalar {
@@ -23,6 +27,8 @@ impl Clone for Scalar {
             Scalar::Number(x) => Scalar::Number(*x),
             Scalar::String(x) => Scalar::String(x.clone()),
             Scalar::Function(callable) => Scalar::Function(callable.clone()),
+            Scalar::Class(class) => Scalar::Class(class.clone()),
+            Scalar::Instance(instance) => Scalar::Instance(instance.clone()),
             Scalar::Nil => Scalar::Nil,
         }
     }
@@ -34,6 +40,8 @@ impl PartialEq for Scalar {
             (Self::Bool(l0), Self::Bool(r0)) => l0 == r0,
             (Self::Number(l0), Self::Number(r0)) => l0 == r0,
             (Self::String(l0), Self::String(r0)) => l0 == r0,
+            (Self::Class(l0), Self::Class(r0)) => l0 == r0,
+            (Self::Instance(l0), Self::Instance(r0)) => l0 == r0,
             _ => core::mem::discriminant(self) == core::mem::discriminant(other),
         }
     }
@@ -49,9 +57,10 @@ impl PartialOrd for Scalar {
     }
 }
 impl Scalar {
-    pub(crate) fn as_fun(&self) -> Option<FunctionValue> {
+    pub(crate) fn as_callable(&self) -> Option<&dyn Callable> {
         match self {
-            Scalar::Function(f) => Some(f.clone()),
+            Scalar::Function(f) => Some(f),
+            Scalar::Class(c) => Some(c),
             _ => None,
         }
     }
@@ -70,6 +79,12 @@ impl Scalar {
     pub(crate) fn as_string(&self) -> Option<String> {
         match self {
             Scalar::String(f) => Some(f.clone()),
+            _ => None,
+        }
+    }
+    pub(crate) fn as_instance(&self) -> Option<Rc<RefCell<InstanceValue>>> {
+        match self {
+            Scalar::Instance(instance) => Some(instance.clone()),
             _ => None,
         }
     }
@@ -153,6 +168,8 @@ impl Not for Scalar {
             Scalar::String(_) => Scalar::Bool(false),
             Scalar::Nil => Scalar::Bool(true),
             Scalar::Function(_) => Scalar::Bool(false),
+            Scalar::Class(_) => Scalar::Bool(false),
+            Scalar::Instance(_) => Scalar::Bool(false),
         }
     }
 }
@@ -174,6 +191,8 @@ impl Display for Scalar {
             Scalar::String(s) => s.clone(),
             Scalar::Nil => "nil".to_string(),
             Scalar::Function(function_value) => function_value.to_string(),
+            Scalar::Class(class) => format!("class {}", class.name),
+            Scalar::Instance(instance) => format!("instance {}", instance.borrow().class.name), 
         };
         write!(f, "{}", s)
     }
@@ -186,6 +205,8 @@ impl Debug for Scalar {
             Scalar::String(s) => s.clone(),
             Scalar::Nil => "nil".to_string(),
             Scalar::Function(function_value) => format!("fn {}", function_value.to_string()),
+            Scalar::Class(class) => format!("class {}", class.name),
+            Scalar::Instance(instance) => format!("instance {}", instance.borrow().class.name),
         };
         write!(f, "{}", s)
     }
@@ -200,6 +221,7 @@ impl From<&str> for Scalar {
         Self::String(value.into())
     }
 }
+
 impl From<NativeFn> for Scalar {
     fn from(value: NativeFn) -> Self {
         Self::Function(value.into())
@@ -208,5 +230,20 @@ impl From<NativeFn> for Scalar {
 impl From<UserFn> for Scalar {
     fn from(value: UserFn) -> Self {
         Self::Function(value.into())
+    }
+}
+impl From<FunctionValue> for Scalar {
+    fn from(value: FunctionValue) -> Self {
+        Self::Function(value)
+    }
+}
+impl From<ClassValue> for Scalar {
+    fn from(value: ClassValue) -> Self {
+        Self::Class(value)
+    }
+}
+impl From<InstanceValue> for Scalar {
+    fn from(value: InstanceValue) -> Self {
+        Self::Instance(Rc::new(RefCell::new(value)))
     }
 }

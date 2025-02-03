@@ -16,7 +16,7 @@ pub struct Environment {
 }
 
 impl Environment {
-    pub fn new(enclosing: Option<EnvironmentType>, name: Option<&str>) -> Rc<RefCell<Self>> {
+    pub fn new(enclosing: Option<EnvironmentType>, name: Option<&str>) -> EnvironmentType {
         Rc::new(RefCell::new(Self {
             name: name.as_ref().unwrap_or(&"default").to_string(),
             enclosing,
