@@ -81,23 +81,31 @@ impl Interprete<Stmt> for Evaluator {
                 } else {
                     None
                 };
-                if has_superclass {
-                    self.env = Environment::new(Some(enclosing_env.clone()), Some("super env"));
-                    self.env
-                        .borrow_mut()
-                        .define("super", Some(super_class.clone().unwrap().into()));
-                }
+                // if has_superclass {
+                //     self.env = Environment::new(Some(enclosing_env.clone()), Some("super env"));
+                //     self.env
+                //         .borrow_mut()
+                //         .define("super", Some(super_class.clone().unwrap().into()));
+                // }
                 let mut class_value = ClassValue::new(name, super_class.map(|s| s.into()));
-
+                let fn_env = if has_superclass {
+                    let super_env = Environment::new(Some(self.env.clone()), Some("super env"));
+                    super_env
+                        .borrow_mut()
+                        .define("super", Some(class_value.clone().into()));
+                    super_env
+                } else {
+                    self.env.clone()
+                };
                 for function in &class.methods {
-                    let fun = UserFn::new(self.env.clone(), function.clone());
+                    let fun = UserFn::new(fn_env.clone(), function.clone());
                     class_value
                         .methods
                         .insert(function.name.lexeme.clone(), fun);
                 }
-                if has_superclass {
-                    self.env = enclosing_env;
-                }
+                // if has_superclass {
+                //     self.env = enclosing_env;
+                // }
                 self.env.borrow_mut().define(name, Some(class_value.into()));
                 Ok(())
             }
