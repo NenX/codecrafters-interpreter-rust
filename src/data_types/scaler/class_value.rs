@@ -2,7 +2,6 @@ use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     callable::Callable,
-    data_types::scaler::FunctionValue,
     evaluator::{Evaluator, InterpretResult},
 };
 

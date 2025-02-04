@@ -97,7 +97,7 @@ impl Display for Environment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let e = self.enclosing.borrow();
         if let Some(enclosing) = e {
-            write!(f, "({},{:?},[{}])", self.name, self.values.keys(), enclosing.borrow_mut().to_string())
+            write!(f, "({},{:?},[{}])", self.name, self.values.keys(), enclosing.borrow_mut())
         } else {
             write!(f, "({},{:?})", self.name, self.values.keys())
         }

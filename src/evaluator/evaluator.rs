@@ -4,7 +4,7 @@ use crate::{
     data_types::scaler::Scalar,
     environment::{EnvErr, Environment, EnvironmentType},
     error::report_runtime,
-    expr::{variable::VariableExpr, Expr},
+    expr::Expr,
     stmt::Stmt,
     token::Token,
     InterpretRtErr,

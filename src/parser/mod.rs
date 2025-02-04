@@ -498,7 +498,7 @@ impl Parser {
             SUPER => {
                 self.consume(DOT, "Expect '.' after 'super'.")?;
                 let method =
-                    self.consume(IDENTIFIER(format!("")), "Expect superclass method name.")?;
+                    self.consume(IDENTIFIER(String::new()), "Expect superclass method name.")?;
                 SuperExpr {
                     keyword: next,
                     method,

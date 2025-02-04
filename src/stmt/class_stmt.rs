@@ -1,9 +1,8 @@
 use std::rc::Rc;
 
-use clap::builder::Str;
 
 use crate::{
-    expr::{variable::VariableExpr, Expr},
+    expr::Expr,
     token::Token,
 };
 

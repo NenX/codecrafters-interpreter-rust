@@ -1,7 +1,6 @@
-use std::rc::Rc;
 
 use crate::{
-    data_types::scaler::{ClassValue, FunctionValue, Scalar, UserFn},
+    data_types::scaler::{ClassValue, Scalar, UserFn},
     environment::Environment,
     stmt::Stmt,
     InterpretRet,

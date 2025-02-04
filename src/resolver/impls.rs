@@ -1,6 +1,5 @@
-use std::collections::HashMap;
 
-use crate::{error::my_error_token, evaluator::Evaluator, expr::Expr, stmt::Stmt, token::Token};
+use crate::{error::my_error_token, expr::Expr, stmt::Stmt};
 
 use super::{ClassType, FunctionType, Resolver, ResolverWalk};
 

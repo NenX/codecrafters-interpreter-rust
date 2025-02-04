@@ -40,7 +40,7 @@ impl Callable for UserFn {
     fn call(&self, evaluator: &mut Evaluator, args: Vec<Scalar>) -> InterpretResult<Scalar> {
         let env = Environment::new(
             Some(self.closure.clone()),
-            Some(&format!("{}", self.to_string())),
+            Some(&self.to_string()),
         );
 
         for (idx, token) in self.declaration.params.iter().enumerate() {
