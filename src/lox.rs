@@ -22,6 +22,7 @@ impl Lox {
         if resolver {
             let mut resolver = Resolver::new(&mut evaluator);
             resolver.resolve_stmts(&stmts);
+            println!("[locals]: {:?}", evaluator.locals);
         }
         for stmt in stmts {
             let res = evaluator.eval(&stmt);

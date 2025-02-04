@@ -53,7 +53,32 @@ impl ResolverWalk<Expr> for Resolver<'_> {
                 self.resolve(&set_expr.value);
                 self.resolve(&set_expr.object);
             }
-            Expr::This(this_expr) => {}
+            Expr::This(this_expr) => {
+                if self.is_class_none() {
+                    my_error_token(
+                        this_expr.keyword.clone(),
+                        "Can't use 'this' outside of a class.".to_string(),
+                    );
+                }
+                self.resolve_local(expr, &this_expr.keyword.lexeme);
+            }
+            Expr::Super(super_expr) => {
+                if self.is_class_none() {
+                    my_error_token(
+                        super_expr.keyword.clone(),
+                        "Can't use 'super' outside of a class.".to_string(),
+                    );
+                }
+                if !self.is_subclass() {
+
+                    my_error_token(
+                        super_expr.keyword.clone(),
+                        "Can't use 'super' in a class with no superclass.".to_string(),
+                    );
+                }
+     
+                self.resolve_local(expr, &super_expr.keyword.lexeme);
+            }
         }
     }
 }
@@ -119,13 +144,32 @@ impl ResolverWalk<Stmt> for Resolver<'_> {
                 }
             }
             Stmt::Class(class_stmt) => {
+                let class_name = &class_stmt.name.lexeme;
+                let has_superclass = class_stmt.superclass.is_some();
                 let enclosing_class = self.class_type;
                 self.set_class_type(ClassType::Class);
                 self.declare(&class_stmt.name);
                 self.define(&class_stmt.name);
 
+                if has_superclass {
+                    let superclass_name = class_stmt.superclass_name().unwrap();
+
+                    let is_same_class = class_name == &superclass_name;
+            
+                    if is_same_class {
+                        my_error_token(
+                            class_stmt.name.clone(),
+                            "A class can't inherit from itself.".to_string(),
+                        );
+                    }
+                    self.set_class_type(ClassType::Subclass);
+
+                    self.begin_scope();
+                    self.cur_scope().unwrap().insert("super".to_string(), true);
+                }
                 self.begin_scope();
                 self.cur_scope().unwrap().insert("this".to_string(), true);
+
                 for function in class_stmt.methods.iter() {
                     let function_type = if function.name.lexeme == "init" {
                         FunctionType::Method
@@ -135,6 +179,10 @@ impl ResolverWalk<Stmt> for Resolver<'_> {
                     self.resolve_function(function.as_ref(), function_type);
                 }
                 self.end_scope();
+
+                if has_superclass {
+                    self.end_scope();
+                }
                 self.set_class_type(enclosing_class);
             }
         }

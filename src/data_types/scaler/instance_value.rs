@@ -27,7 +27,7 @@ impl InstanceValue {
             return Ok(field.clone());
         }
 
-        let method = self.class.methods.get(name);
+        let method = self.class.find_method(name);
 
         if let Some(method) = method {
             return Ok(method.bind(self).into());

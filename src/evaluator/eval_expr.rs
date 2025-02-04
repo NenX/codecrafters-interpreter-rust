@@ -184,6 +184,36 @@ impl Interprete<Expr> for Evaluator {
                     }
                 }
             }
+            Expr::Super(super_expr) => {
+                let method_name = &super_expr.method.lexeme;
+                let distance = self
+                    .get_depth(expr)
+                    .expect("Superclass distance not found.");
+                let sup_class = self
+                    .env
+                    .borrow()
+                    .get_at(distance, "super")
+                    .expect("super not found.");
+                let sup_class = sup_class.as_class().expect("super is not a class.");
+                let sup_method = sup_class.find_method(method_name);
+                let this_instance = self
+                    .env
+                    .borrow()
+                    .get_at(distance - 1, "this")
+                    .expect("this not found.")
+                    .as_instance()
+                    .expect("this is not an instance.");
+                match sup_method {
+                    Some(sup_method) => Ok(sup_method.bind(&this_instance.borrow()).into()),
+                    None => {
+                        report_runtime(
+                            super_expr.keyword.line,
+                            "Undefined variable 'super'.".to_string(),
+                        );
+                        InterpretRtErr!(;"bad super")
+                    }
+                }
+            }
         }
     }
 }

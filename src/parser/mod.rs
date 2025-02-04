@@ -7,7 +7,7 @@ use crate::{
     expr::{
         assign::AssignExpr, binary::BinaryExpr, call::CallExpr, get::GetExpr,
         grouping::GroupingExpr, literal::LiteralExpr, logical::LogicalExpr, set::SetExpr,
-        this::ThisExpr, unary::UnaryExpr, variable::VariableExpr, Expr,
+        super_expr::SuperExpr, this::ThisExpr, unary::UnaryExpr, variable::VariableExpr, Expr,
     },
     stmt::{
         block::BlockStmt, class_stmt::ClassStmt, expression::ExpressionStmt,
@@ -105,13 +105,24 @@ impl Parser {
     }
     fn class_declaration(&mut self) -> MyResult<Stmt> {
         let name = self.consume(IDENTIFIER(String::new()), "")?;
+
+        let mut superclass = None;
+
+        if self.match_advance_unchecked([LESS]).is_some() {
+            superclass = Some(self.consume(IDENTIFIER(String::new()), "Expect superclass name.")?);
+        }
         self.consume(LeftBrace, "Expect '{' after class name.")?;
         let mut methods = vec![];
         while !self.check_unchecked([&RightBrace]) {
             methods.push(Rc::new(self.function_declaration()?));
         }
         self.consume(RightBrace, "Expect '}' after class body.")?;
-        Ok(ClassStmt { name, methods }.into())
+        Ok(ClassStmt {
+            name,
+            methods,
+            superclass: superclass.map(|name| VariableExpr { name }.into()),
+        }
+        .into())
     }
 
     fn function_declaration(&mut self) -> MyResult<FunctionStmt> {
@@ -484,6 +495,16 @@ impl Parser {
             }
             IDENTIFIER(_) => VariableExpr { name: next }.into(),
             THIS => ThisExpr { keyword: next }.into(),
+            SUPER => {
+                self.consume(DOT, "Expect '.' after 'super'.")?;
+                let method =
+                    self.consume(IDENTIFIER(format!("")), "Expect superclass method name.")?;
+                SuperExpr {
+                    keyword: next,
+                    method,
+                }
+                .into()
+            }
             _ => {
                 return MyErr!(,ParseError::NotExpected(next, "[Parser] Expect expression.".to_string()))
             }

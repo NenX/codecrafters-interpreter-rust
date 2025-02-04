@@ -1,6 +1,11 @@
 use std::rc::Rc;
 
-use crate::token::Token;
+use clap::builder::Str;
+
+use crate::{
+    expr::{variable::VariableExpr, Expr},
+    token::Token,
+};
 
 use super::function::FunctionStmt;
 
@@ -8,4 +13,13 @@ use super::function::FunctionStmt;
 pub struct ClassStmt {
     pub name: Token,
     pub methods: Vec<Rc<FunctionStmt>>,
+    pub superclass: Option<Expr>,
+}
+
+impl ClassStmt {
+    pub fn superclass_name(&self) -> Option<String> {
+        self.superclass
+            .as_ref()
+            .map(|expr| expr.to_variable().unwrap().name.lexeme.clone())
+    }
 }

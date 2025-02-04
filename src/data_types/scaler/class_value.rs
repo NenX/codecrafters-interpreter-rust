@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     callable::Callable,
@@ -12,6 +12,7 @@ use super::{InstanceValue, Scalar, UserFn};
 pub struct ClassValue {
     pub name: String,
     pub methods: HashMap<String, UserFn>,
+    pub super_class: Option<Rc<ClassValue>>,
 }
 impl PartialEq for ClassValue {
     fn eq(&self, other: &Self) -> bool {
@@ -19,14 +20,23 @@ impl PartialEq for ClassValue {
     }
 }
 impl ClassValue {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str, super_class: Option<Rc<ClassValue>>) -> Self {
         Self {
             name: name.to_string(),
             methods: HashMap::new(),
+            super_class,
         }
     }
     pub fn find_method(&self, name: &str) -> Option<UserFn> {
-        self.methods.get(name).cloned()
+        let method = self.methods.get(name);
+        if let Some(method) = method {
+            return Some(method.clone());
+        }
+        if let Some(super_class) = &self.super_class {
+            super_class.find_method(name)
+        } else {
+            None
+        }
     }
 }
 impl Callable for ClassValue {

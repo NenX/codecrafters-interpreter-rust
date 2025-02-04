@@ -1,4 +1,3 @@
-
 use std::rc::Rc;
 
 use crate::{
@@ -23,10 +22,11 @@ impl UserFn {
         }
     }
     pub fn bind(&self, instance: &InstanceValue) -> Self {
-        let mut env = self.closure.borrow_mut();
-        env.define("this", Some(instance.clone().into()));
+        let env = Environment::new(Some(self.closure.clone()), Some("bind env"));
+        env.borrow_mut()
+            .define("this", Some(instance.clone().into()));
         Self {
-            closure: self.closure.clone(),
+            closure: env,
             declaration: self.declaration.clone(),
         }
     }
@@ -40,7 +40,7 @@ impl Callable for UserFn {
     fn call(&self, evaluator: &mut Evaluator, args: Vec<Scalar>) -> InterpretResult<Scalar> {
         let env = Environment::new(
             Some(self.closure.clone()),
-            Some(&self.declaration.name.lexeme),
+            Some(&format!("{}", self.to_string())),
         );
 
         for (idx, token) in self.declaration.params.iter().enumerate() {
@@ -49,6 +49,7 @@ impl Callable for UserFn {
             env_mut.define(token.lexeme.clone(), args.get(idx).cloned());
         }
         // let res = self.declaration.body.interpret(env.clone());
+        // println!("call user function: {} env: {}", self.to_string(), env.borrow());
         let res = evaluator.eval_block(&self.declaration.fn_body, env.clone());
         let ret = match res {
             Ok(_) => Scalar::Nil,
@@ -64,4 +65,3 @@ impl Callable for UserFn {
         self.declaration.params.len()
     }
 }
-

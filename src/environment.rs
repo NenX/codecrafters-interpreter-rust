@@ -2,10 +2,7 @@ use std::{
     borrow::Borrow, cell::RefCell, collections::HashMap, error::Error, fmt::Display, rc::Rc,
 };
 
-use crate::{
-    callable::Callable,
-    data_types::scaler::{NativeFn, Scalar},
-};
+use crate::data_types::scaler::{NativeFn, Scalar};
 pub type EnvironmentType = Rc<RefCell<Environment>>;
 
 #[derive(Debug)]
@@ -77,7 +74,7 @@ impl Environment {
 
     pub fn get_at(&self, distance: usize, name: impl AsRef<str>) -> Result<Scalar, EnvErr> {
         if distance == 0 {
-            return self.get(name)
+            return self.get(name);
         }
         self.ancestor(distance).unwrap().borrow_mut().get(name)
     }
@@ -96,7 +93,16 @@ impl Environment {
             .assign(name, value)
     }
 }
-
+impl Display for Environment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let e = self.enclosing.borrow();
+        if let Some(enclosing) = e {
+            write!(f, "({},{:?},[{}])", self.name, self.values.keys(), enclosing.borrow_mut().to_string())
+        } else {
+            write!(f, "({},{:?})", self.name, self.values.keys())
+        }
+    }
+}
 #[derive(Debug)]
 pub enum EnvErr {
     AssignUndefined,

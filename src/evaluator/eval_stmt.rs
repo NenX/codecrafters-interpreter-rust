@@ -69,8 +69,25 @@ impl Interprete<Stmt> for Evaluator {
                 InterpretRet!(value)
             }
             Stmt::Class(class) => {
+                let enclosing_env = self.env.clone();
+                let has_superclass = class.superclass.is_some();
                 let name = &class.name.lexeme;
-                let mut class_value = ClassValue::new(name);
+
+                let super_class = if let Some(super_class) = &class.superclass {
+                    let super_class = self.eval(super_class).expect("superclass not found");
+                    let super_class = super_class.as_class().unwrap().clone();
+
+                    Some(super_class)
+                } else {
+                    None
+                };
+                if has_superclass {
+                    self.env = Environment::new(Some(enclosing_env.clone()), Some("super env"));
+                    self.env
+                        .borrow_mut()
+                        .define("super", Some(super_class.clone().unwrap().into()));
+                }
+                let mut class_value = ClassValue::new(name, super_class.map(|s| s.into()));
 
                 for function in &class.methods {
                     let fun = UserFn::new(self.env.clone(), function.clone());
@@ -78,7 +95,9 @@ impl Interprete<Stmt> for Evaluator {
                         .methods
                         .insert(function.name.lexeme.clone(), fun);
                 }
-
+                if has_superclass {
+                    self.env = enclosing_env;
+                }
                 self.env.borrow_mut().define(name, Some(class_value.into()));
                 Ok(())
             }

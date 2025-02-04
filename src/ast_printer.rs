@@ -33,6 +33,7 @@ impl AstPrinter for Expr {
             Expr::Get(get_expr) => todo!(),
             Expr::Set(set_expr) => todo!(),
             Expr::This(this_expr) => todo!(),
+            Expr::Super(super_expr) => todo!(),
         }
     }
 

@@ -6,6 +6,7 @@ use grouping::GroupingExpr;
 use literal::LiteralExpr;
 use logical::LogicalExpr;
 use set::SetExpr;
+use super_expr::SuperExpr;
 use this::ThisExpr;
 use unary::UnaryExpr;
 use variable::VariableExpr;
@@ -18,6 +19,7 @@ pub mod grouping;
 pub mod literal;
 pub mod logical;
 pub mod set;
+pub mod super_expr;
 pub mod this;
 pub mod unary;
 pub mod variable;
@@ -35,6 +37,15 @@ pub enum Expr {
     Get(Box<GetExpr>),
     Set(Box<SetExpr>),
     This(Box<ThisExpr>),
+    Super(Box<SuperExpr>),
+}
+impl Expr {
+    pub fn to_variable(&self) -> Option<&VariableExpr> {
+        match self {
+            Self::Variable(variable) => Some(variable),
+            _ => None,
+        }
+    }
 }
 impl From<BinaryExpr> for Expr {
     fn from(value: BinaryExpr) -> Self {
@@ -89,5 +100,20 @@ impl From<SetExpr> for Expr {
 impl From<ThisExpr> for Expr {
     fn from(value: ThisExpr) -> Self {
         Self::This(value.into())
+    }
+}
+impl From<SuperExpr> for Expr {
+    fn from(value: SuperExpr) -> Self {
+        Self::Super(value.into())
+    }
+}
+impl ToString for Expr {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Variable(variable) => variable.name.lexeme.clone(),
+            Self::This(_) => "this".to_string(),
+            Self::Super(_) => "super".to_string(),
+            _ => "expr".to_string(),
+        }
     }
 }

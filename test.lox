@@ -1,26 +1,24 @@
-fun sayAge() {
-  print this.age;
-}
-
-class Person {
-  sayName() {
-    print this.name;
+class A {
+  method() {
+    print "A method";
   }
 }
 
-var jane = Person();
-jane.name = "Jane";
-jane.sayName(); // Jane
-jane.sayAge = sayAge;
-jane.sayAge(); // 20
-var bill = Person();
-bill.name = "Bill";
-bill.sayName(); // Bill
+class B < A {
+  method() {
+    print "B method";
+  }
 
-bill.sayName = jane.sayName;
-bill.sayName(); // Jane
-fun sayAge() {
-  print this.age;
+  test() {
+    super.method();
+    this.self();
+  }
 }
-bill.sayAge = sayAge;
-bill.sayAge(); // 20
+
+class C < B {
+  self() {
+    print "C method";
+  }
+}
+
+C().test();

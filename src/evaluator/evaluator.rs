@@ -4,7 +4,7 @@ use crate::{
     data_types::scaler::Scalar,
     environment::{EnvErr, Environment, EnvironmentType},
     error::report_runtime,
-    expr::Expr,
+    expr::{variable::VariableExpr, Expr},
     stmt::Stmt,
     token::Token,
     InterpretRtErr,
@@ -13,7 +13,7 @@ use crate::{
 use super::{error::InterpretResult, InterpretError, Interprete};
 
 pub struct Evaluator {
-    pub(crate) locals: HashMap<*const Expr, usize>,
+    pub(crate) locals: HashMap<*const Expr, (usize, String)>,
     pub(crate) env: EnvironmentType,
     pub(crate) global: EnvironmentType,
     pub(crate) resolver: bool,
@@ -36,12 +36,13 @@ impl Evaluator {
         }
     }
     pub(crate) fn resolve(&mut self, expr: &Expr, depth: usize) {
-        self.locals.insert(expr, depth);
+        self.locals.insert(expr, (depth, expr.to_string()));
     }
     pub(crate) fn get_depth(&self, expr: &Expr) -> Option<usize> {
         let ptr = expr as *const Expr;
-        let result = self.locals.get(&ptr).copied();
-        result
+        // println!("get_depth: ptr: {:?} name: {}", ptr, expr.to_string());
+        let result = self.locals.get(&ptr).cloned();
+        result.map(|(depth, _)| depth)
     }
     pub(crate) fn assign_variable(
         &mut self,

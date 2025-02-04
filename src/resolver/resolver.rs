@@ -9,17 +9,18 @@ use crate::{
 };
 
 use super::ResolverWalk;
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum FunctionType {
     None,
     Function,
     Initializer,
     Method,
 }
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum ClassType {
     None,
     Class,
+    Subclass,
 }
 pub struct Resolver<'a> {
     scopes: Vec<HashMap<String, bool>>,
@@ -56,8 +57,14 @@ impl<'a> Resolver<'a> {
     pub fn is_normal_function(&self) -> bool {
         matches!(self.function_type, FunctionType::Function)
     }
+    pub fn is_class_none(&self) -> bool {
+        matches!(self.class_type, ClassType::None)
+    }
     pub fn is_class(&self) -> bool {
         matches!(self.class_type, ClassType::Class)
+    }
+    pub fn is_subclass(&self) -> bool {
+        matches!(self.class_type, ClassType::Subclass)
     }
     pub fn resolve_function(&mut self, function: &FunctionStmt, function_type: FunctionType) {
         let enclosing_function = self.function_type;

@@ -64,6 +64,12 @@ impl Scalar {
             _ => None,
         }
     }
+    pub(crate) fn as_class(&self) -> Option<&ClassValue> {
+        match self {
+            Scalar::Class(c) => Some(c),
+            _ => None,
+        }
+    }
     pub(crate) fn as_bool(&self) -> Option<bool> {
         match self {
             Scalar::Bool(f) => Some(*f),
