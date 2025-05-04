@@ -10,7 +10,7 @@ use codecrafters_interpreter::lox::Lox;
 
 fn main() {
     let x = ArgsParser::parse();
-    let resolver = x.resolver.unwrap_or(false);
+    let resolver = x.resolver.unwrap_or(true);
     match x.cmds {
         Cmd::Tokenize { file } => {
             Lox::tokenize(file).print_tokens();
