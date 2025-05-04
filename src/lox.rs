@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use bytes::Bytes;
 
 use crate::{
-    error::MyResult,
+    error::{had_error, MyResult, HAD_ERROR},
     evaluator::{Evaluator, InterpretError, Interprete},
     expr::Expr,
     parser::Parser,
@@ -18,11 +18,16 @@ impl Lox {
         let scanner = Self::tokenize(path);
         let mut parser = Parser::new(scanner.tokens());
         let stmts = parser.parse();
+        if had_error() {
+            return MyErr!(;"HAD_ERROR");
+        }
         let mut evaluator = Evaluator::new(resolver);
         if resolver {
             let mut resolver = Resolver::new(&mut evaluator);
             resolver.resolve_stmts(&stmts);
-            // println!("[locals]: {:?}", evaluator.locals);
+            if had_error() {
+                return MyErr!(;"HAD_ERROR");
+            }
         }
         for stmt in stmts {
             let res = evaluator.eval(&stmt);
@@ -30,8 +35,8 @@ impl Lox {
                 match e {
                     InterpretError::Runtime(msg) => {
                         eprintln!("[runtime err] {}", msg);
-                        return MyErr!(;msg)
-                    },
+                        return MyErr!(;msg);
+                    }
                     _ => {
                         eprintln!("[stmt err] {:?}", e)
                     }

@@ -1,23 +1,20 @@
-var count = 0;
+// Helper function that simply returns its argument
+fun returnArg(arg) {
+  return arg;
+}
+
+// Declare global variable 'b'
+var b = "global";
 
 {
-  // The `counter` function should use the `count` variable from the
-  // global scope.
-  fun makeCounter() {
-    fun counter() {
-      // This should increment the `count` variable from the global scope.
-      count = count + 1;
-      print count;
-    }
-    return counter;
-  }
+  // Local variable declaration
+  var a = "first";
 
-  var counter1 = makeCounter();
-  counter1(); // Should print 1
-  counter1(); // Should print 2
-
-  // This variable declaration shouldn't affect our counter.
-  var count = 0;
-
-  counter1(); // Should print 3
+  // Attempting to initialize local variable 'b' using local variable 'b'
+  // through a function call
+  var b = returnArg(b); // This should be a compile error
+  print b;
 }
+
+var b = b + " updated";
+print b;

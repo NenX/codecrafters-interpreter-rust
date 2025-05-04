@@ -8,6 +8,7 @@ impl ResolverWalk<Expr> for Resolver<'_> {
             Expr::Variable(variable_expr) => {
                 let name = variable_expr.name.lexeme.clone();
                 let cur = self.cur_scope();
+                // println!("cur: {:?}, name: {}", cur, name);
                 if cur.map_or(false, |scope| matches!(scope.get(&name), Some(false))) {
                     my_error_token(
                         variable_expr.name.clone(),

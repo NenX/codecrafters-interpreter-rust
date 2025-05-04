@@ -68,5 +68,6 @@ pub fn report_runtime(line: usize, message: String) {
     };
 }
 
-#[test]
-fn tt() {}
+pub fn had_error() -> bool {
+    unsafe { HAD_ERROR }
+}
