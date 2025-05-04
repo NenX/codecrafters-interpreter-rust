@@ -21,10 +21,9 @@ impl UserFn {
             declaration: delc,
         }
     }
-    pub fn bind(&self, instance: &InstanceValue) -> Self {
+    pub fn bind(&self, instance: Scalar) -> Self {
         let env = Environment::new(Some(self.closure.clone()), Some("bind env"));
-        env.borrow_mut()
-            .define("this", Some(instance.clone().into()));
+        env.borrow_mut().define("this", Some(instance));
         Self {
             closure: env,
             declaration: self.declaration.clone(),
@@ -38,10 +37,7 @@ impl Callable for UserFn {
     }
 
     fn call(&self, evaluator: &mut Evaluator, args: Vec<Scalar>) -> InterpretResult<Scalar> {
-        let env = Environment::new(
-            Some(self.closure.clone()),
-            Some(&self.to_string()),
-        );
+        let env = Environment::new(Some(self.closure.clone()), Some(&self.to_string()));
 
         for (idx, token) in self.declaration.params.iter().enumerate() {
             let mut env_mut = env.borrow_mut();

@@ -8,10 +8,10 @@ use crate::{
 
 use super::{ClassValue, Scalar};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct InstanceValue {
     pub class: ClassValue,
-    fields: HashMap<String, Scalar>,
+    pub fields: HashMap<String, Scalar>,
 }
 impl InstanceValue {
     pub fn new(class: ClassValue) -> Self {
@@ -30,7 +30,7 @@ impl InstanceValue {
         let method = self.class.find_method(name);
 
         if let Some(method) = method {
-            return Ok(method.bind(self).into());
+            return Ok(method.bind(self.clone().into()).into());
         }
         report_runtime(token.line, format!("Field {} not found", name));
         Err(InterpretError::Runtime(format!("Field {} not found", name)))

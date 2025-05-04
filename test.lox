@@ -1,11 +1,13 @@
-{
-  class Foo {
-    returnSelf() {
-      // Should be able to return the class itself
-      return Foo;
-    }
+class Default {
+  // this is the constructor
+  init() {
+    // it should be able to set<|SPACE|>    // properties on the instance
+    this.x = "hello";
+    this.y = 40;
   }
-
-  // Calling a method on an instance should work
-  print Foo().returnSelf();
 }
+
+// the constructor should be called
+// automatically  when the class is being<|SPACE|>// instantiated
+print Default().x;
+print Default().y;

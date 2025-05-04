@@ -7,7 +7,7 @@ use crate::{
 
 use super::{InstanceValue, Scalar, UserFn};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ClassValue {
     pub name: String,
     pub methods: HashMap<String, UserFn>,
@@ -53,10 +53,11 @@ impl Callable for ClassValue {
 
     fn call(&self, evaluator: &mut Evaluator, args: Vec<Scalar>) -> InterpretResult<Scalar> {
         let instance = InstanceValue::new(self.clone());
+        let instance_value: Scalar = instance.into();
         if let Some(method) = self.methods.get("init") {
-            let a = method.call(evaluator, args)?;
-            return Ok(a);
+            method.bind(instance_value.clone()).call(evaluator, args)?;
+            return Ok(instance_value);
         }
-        Ok(instance.into())
+        Ok(instance_value)
     }
 }

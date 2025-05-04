@@ -1,4 +1,3 @@
-
 use crate::{
     callable::Callable,
     data_types::scaler::Scalar,
@@ -199,11 +198,10 @@ impl Interprete<Expr> for Evaluator {
                     .env
                     .borrow()
                     .get_at(distance - 1, "this")
-                    .expect("this not found.")
-                    .as_instance()
-                    .expect("this is not an instance.");
+                    .expect("this not found.");
+
                 match sup_method {
-                    Some(sup_method) => Ok(sup_method.bind(&this_instance.borrow()).into()),
+                    Some(sup_method) => Ok(sup_method.bind(this_instance).into()),
                     None => {
                         report_runtime(
                             super_expr.keyword.line,
