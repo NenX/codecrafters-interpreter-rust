@@ -1,4 +1,3 @@
-
 use crate::{error::my_error_token, expr::Expr, stmt::Stmt};
 
 use super::{ClassType, FunctionType, Resolver, ResolverWalk};
@@ -8,11 +7,8 @@ impl ResolverWalk<Expr> for Resolver<'_> {
         match expr {
             Expr::Variable(variable_expr) => {
                 let name = variable_expr.name.lexeme.clone();
-
-                if self
-                    .cur_scope()
-                    .map_or(false, |scope| matches!(scope.get(&name), Some(false)))
-                {
+                let cur = self.cur_scope();
+                if cur.map_or(false, |scope| matches!(scope.get(&name), Some(false))) {
                     my_error_token(
                         variable_expr.name.clone(),
                         "Can't read local variable in its own initializer.".to_string(),
@@ -69,13 +65,12 @@ impl ResolverWalk<Expr> for Resolver<'_> {
                     );
                 }
                 if !self.is_subclass() {
-
                     my_error_token(
                         super_expr.keyword.clone(),
                         "Can't use 'super' in a class with no superclass.".to_string(),
                     );
                 }
-     
+
                 self.resolve_local(expr, &super_expr.keyword.lexeme);
             }
         }
@@ -96,6 +91,7 @@ impl ResolverWalk<Stmt> for Resolver<'_> {
                 if let Some(initializer) = &var_stmt.initializer {
                     self.resolve(initializer);
                 }
+                self.define(&var_stmt.name);
             }
             Stmt::Block(block_stmt) => {
                 self.begin_scope();
@@ -154,7 +150,7 @@ impl ResolverWalk<Stmt> for Resolver<'_> {
                     let superclass_name = class_stmt.superclass_name().unwrap();
 
                     let is_same_class = class_name == &superclass_name;
-            
+
                     if is_same_class {
                         my_error_token(
                             class_stmt.name.clone(),

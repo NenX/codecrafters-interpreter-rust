@@ -59,24 +59,23 @@ impl Environment {
             None => Err(EnvErr::AccessUndefined),
         }
     }
-    pub fn ancestor(&self, distance: usize) -> Option<EnvironmentType> {
+    pub fn ancestor(&self, distance: usize) -> EnvironmentType {
         assert!(distance > 0);
-        self.enclosing.as_ref()?;
-        let mut env: Rc<RefCell<Environment>> = self.enclosing.clone().unwrap();
+        let mut env: EnvironmentType = self.enclosing.clone().unwrap();
         for _ in 1..distance {
             let _env: &RefCell<Environment> = env.borrow();
-            let _env: Rc<RefCell<Environment>> = _env.borrow_mut().enclosing.clone().unwrap();
+            let _env: EnvironmentType = _env.borrow().enclosing.clone().unwrap();
             env = _env;
         }
 
-        Some(env)
+        env
     }
 
     pub fn get_at(&self, distance: usize, name: impl AsRef<str>) -> Result<Scalar, EnvErr> {
         if distance == 0 {
             return self.get(name);
         }
-        self.ancestor(distance).unwrap().borrow_mut().get(name)
+        self.ancestor(distance).borrow_mut().get(name)
     }
     pub fn assign_at(
         &mut self,
@@ -87,17 +86,20 @@ impl Environment {
         if distance == 0 {
             return self.assign(name, value);
         }
-        self.ancestor(distance)
-            .unwrap()
-            .borrow_mut()
-            .assign(name, value)
+        self.ancestor(distance).borrow_mut().assign(name, value)
     }
 }
 impl Display for Environment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let e = self.enclosing.borrow();
         if let Some(enclosing) = e {
-            write!(f, "({},{:?},[{}])", self.name, self.values.keys(), enclosing.borrow_mut())
+            write!(
+                f,
+                "({},{:?},[{}])",
+                self.name,
+                self.values.keys(),
+                enclosing.borrow_mut()
+            )
         } else {
             write!(f, "({},{:?})", self.name, self.values.keys())
         }
