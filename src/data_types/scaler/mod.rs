@@ -197,7 +197,8 @@ impl Display for Scalar {
             Scalar::String(s) => s.clone(),
             Scalar::Nil => "nil".to_string(),
             Scalar::Function(function_value) => function_value.to_string(),
-            Scalar::Class(class) => format!("class {}", class.name),
+            // Scalar::Class(class) => format!("class {}", class.name),
+            Scalar::Class(class) => format!("{}", class.name),
             Scalar::Instance(instance) => format!("instance {}", instance.borrow().class.name), 
         };
         write!(f, "{}", s)
