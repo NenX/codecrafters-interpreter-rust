@@ -168,9 +168,9 @@ impl ResolverWalk<Stmt> for Resolver<'_> {
 
                 for function in class_stmt.methods.iter() {
                     let function_type = if function.name.lexeme == "init" {
-                        FunctionType::Method
-                    } else {
                         FunctionType::Initializer
+                    } else {
+                        FunctionType::Method
                     };
                     self.resolve_function(function.as_ref(), function_type);
                 }

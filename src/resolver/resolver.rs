@@ -49,6 +49,7 @@ impl<'a> Resolver<'a> {
         !matches!(self.function_type, FunctionType::None)
     }
     pub fn is_initializer(&self) -> bool {
+        // println!("is_initializer: {:?}", self.function_type);
         matches!(self.function_type, FunctionType::Initializer)
     }
     pub fn is_method(&self) -> bool {
