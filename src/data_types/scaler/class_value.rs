@@ -37,6 +37,16 @@ impl ClassValue {
             None
         }
     }
+    pub fn add_method(&mut self, name: &str, method: UserFn) {
+        self.methods.insert(name.to_string(), method);
+    }
+    pub fn bind_init(&self, instance_value: &Scalar) -> Option<UserFn> {
+        if let Some(method) = self.methods.get("init") {
+            let a = method.bind(instance_value.clone());
+            return Some(a);
+        }
+        return None;
+    }
 }
 impl Callable for ClassValue {
     fn to_string(&self) -> String {
@@ -54,8 +64,8 @@ impl Callable for ClassValue {
     fn call(&self, evaluator: &mut Evaluator, args: Vec<Scalar>) -> InterpretResult<Scalar> {
         let instance = InstanceValue::new(self.clone());
         let instance_value: Scalar = instance.into();
-        if let Some(method) = self.methods.get("init") {
-            method.bind(instance_value.clone()).call(evaluator, args)?;
+        if let Some(method) = self.bind_init(&instance_value) {
+            method.call(evaluator, args)?;
             return Ok(instance_value);
         }
         Ok(instance_value)

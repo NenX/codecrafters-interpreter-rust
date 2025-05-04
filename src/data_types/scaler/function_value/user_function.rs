@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     callable::Callable,
@@ -11,6 +11,7 @@ use crate::{
 #[derive(Debug, Clone)]
 
 pub struct UserFn {
+    pub instance: Option<Rc<RefCell<Scalar>>>, // 是否 bind 过
     closure: EnvironmentType,
     declaration: Rc<FunctionStmt>,
 }
@@ -19,15 +20,20 @@ impl UserFn {
         Self {
             closure: env,
             declaration: delc,
+            instance: None,
         }
     }
     pub fn bind(&self, instance: Scalar) -> Self {
         let env = Environment::new(Some(self.closure.clone()), Some("bind env"));
-        env.borrow_mut().define("this", Some(instance));
+        env.borrow_mut().define("this", Some(instance.clone()));
         Self {
             closure: env,
             declaration: self.declaration.clone(),
+            instance: Some(Rc::new(RefCell::new(instance))),
         }
+    }
+    pub fn is_init(&self) -> bool {
+        self.declaration.name.lexeme == "init"
     }
 }
 impl Callable for UserFn {
@@ -47,12 +53,15 @@ impl Callable for UserFn {
         // let res = self.declaration.body.interpret(env.clone());
         // println!("call user function: {} env: {}", self.to_string(), env.borrow());
         let res = evaluator.eval_block(&self.declaration.fn_body, env.clone());
-        let ret = match res {
-            Ok(_) => Scalar::Nil,
-            Err(e) => match e {
-                InterpretError::Return(scalar) => scalar,
-                _ => return Err(e),
-            },
+        let Err(e) = res else {
+            if self.is_init() && self.instance.is_some() {
+                return Ok(self.instance.as_ref().unwrap().borrow().clone());
+            }
+            return Ok(Scalar::Nil);
+        };
+        let ret = match e {
+            InterpretError::Return(scalar) => scalar,
+            _ => return Err(e),
         };
         Ok(ret)
     }

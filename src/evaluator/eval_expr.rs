@@ -120,6 +120,7 @@ impl Interprete<Expr> for Evaluator {
             }
             Expr::Call(call) => {
                 let callee = self.eval(&call.callee)?;
+                // println!("callee: {:?}", callee);
                 let mut args = Vec::new();
                 for arg in &call.arguments {
                     args.push(self.eval(arg)?);
@@ -152,10 +153,11 @@ impl Interprete<Expr> for Evaluator {
                 let object = self.eval(&get.object)?;
                 let instance = object.as_instance();
                 if let Some(instance) = instance {
-                    instance.borrow().get(&get.name)
+                    let instance = instance.borrow();
+                    instance.get(&get.name)
                 } else {
-                    report_runtime(get.name.line, "Only instances have properties.".to_string());
-                    InterpretRtErr!(;"bad get")
+                    report_runtime(get.name.line, format!("Only instances have properties."));
+                    InterpretRtErr!(;format!("bad get: {}", get.name.lexeme))
                 }
             }
             Expr::Set(set) => {
@@ -168,7 +170,7 @@ impl Interprete<Expr> for Evaluator {
                     Ok(value)
                 } else {
                     report_runtime(set.name.line, "Only instances have properties.".to_string());
-                    InterpretRtErr!(;"bad set")
+                    InterpretRtErr!(;format!("bad set {}.", set.name.lexeme))
                 }
             }
             Expr::This(this) => {

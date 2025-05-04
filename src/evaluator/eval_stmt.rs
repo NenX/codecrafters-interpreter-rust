@@ -1,4 +1,3 @@
-
 use crate::{
     data_types::scaler::{ClassValue, Scalar, UserFn},
     environment::Environment,
@@ -98,13 +97,8 @@ impl Interprete<Stmt> for Evaluator {
                 };
                 for function in &class.methods {
                     let fun = UserFn::new(fn_env.clone(), function.clone());
-                    class_value
-                        .methods
-                        .insert(function.name.lexeme.clone(), fun);
+                    class_value.add_method(&function.name.lexeme, fun);
                 }
-                // if has_superclass {
-                //     self.env = enclosing_env;
-                // }
                 self.env.borrow_mut().define(name, Some(class_value.into()));
                 Ok(())
             }

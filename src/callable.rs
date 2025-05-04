@@ -1,5 +1,5 @@
 use crate::{
-   data_types::scaler::Scalar,
+    data_types::scaler::Scalar,
     evaluator::{Evaluator, InterpretResult},
 };
 
@@ -11,5 +11,3 @@ pub trait Callable {
 
     fn call(&self, evaluator: &mut Evaluator, args: Vec<Scalar>) -> InterpretResult<Scalar>;
 }
-
-
