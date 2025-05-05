@@ -41,7 +41,7 @@ impl ClassValue {
         self.methods.insert(name.to_string(), method);
     }
     pub fn bind_init(&self, instance_value: &Scalar) -> Option<UserFn> {
-        if let Some(method) = self.methods.get("init") {
+        if let Some(method) = self.find_method("init") {
             let a = method.bind(instance_value.clone());
             return Some(a);
         }
