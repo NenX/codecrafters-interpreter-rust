@@ -90,7 +90,7 @@ impl Interprete<Expr> for Evaluator {
                             variable.name.line,
                             format!("Access undefined variable '{}'.", name),
                         );
-                        InterpretRtErr!(;"bad variable access")
+                        InterpretRtErr!(;format!("bad variable access: {}", name))
                     }
                 }
             }

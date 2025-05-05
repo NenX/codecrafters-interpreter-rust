@@ -159,7 +159,7 @@ impl ResolverWalk<Stmt> for Resolver<'_> {
                         );
                     }
                     self.set_class_type(ClassType::Subclass);
-
+                    self.resolve(class_stmt.superclass.as_ref().unwrap());
                     self.begin_scope();
                     self.cur_scope().unwrap().insert("super".to_string(), true);
                 }

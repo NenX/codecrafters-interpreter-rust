@@ -1,3 +1,5 @@
+use std::ptr::addr_of;
+
 use assign::AssignExpr;
 use binary::BinaryExpr;
 use call::CallExpr;
@@ -45,6 +47,9 @@ impl Expr {
             Self::Variable(variable) => Some(variable),
             _ => None,
         }
+    }
+    pub(crate) fn as_ptr(&self) -> usize {
+        addr_of!(*self) as usize
     }
 }
 impl From<BinaryExpr> for Expr {

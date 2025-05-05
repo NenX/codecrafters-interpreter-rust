@@ -13,7 +13,7 @@ use crate::{
 use super::{error::InterpretResult, InterpretError, Interprete};
 
 pub struct Evaluator {
-    pub(crate) locals: HashMap<*const Expr, (usize, String)>,
+    pub(crate) locals: HashMap<usize, (usize, String)>,
     pub(crate) env: EnvironmentType,
     pub(crate) global: EnvironmentType,
     pub(crate) resolver: bool,
@@ -36,11 +36,12 @@ impl Evaluator {
         }
     }
     pub(crate) fn resolve(&mut self, expr: &Expr, depth: usize) {
-        self.locals.insert(expr, (depth, expr.to_string()));
+        self.locals.insert(expr.as_ptr(), (depth, expr.to_string()));
     }
     pub(crate) fn get_depth(&self, expr: &Expr) -> Option<usize> {
-        let ptr = expr as *const Expr;
-        // println!("get_depth: ptr: {:?} name: {}", ptr, expr.to_string());
+        let ptr = expr.as_ptr();
+        // println!("ptr: {:?} name: {} local: {:?}", ptr, expr.to_string(), self.locals);
+
         let result = self.locals.get(&ptr).cloned();
         result.map(|(depth, _)| depth)
     }
