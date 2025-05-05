@@ -1,17 +1,7 @@
-class Foo {
-  init() {
-    this.secret = 42;
-  }
-}
+fun A() {}
 
-// Bar is a subclass of Foo
-class Bar < Foo {}
+// A class can only inherit from a class.
+class B < A {} // expect runtime error
 
-// Baz is a subclass of Bar
-class Baz < Bar {}
-
-var baz = Baz();
-
-// Baz should inherit the constructor from Foo
-// which should set the secret value to 42
-print baz.secret;
+print A();
+print B();

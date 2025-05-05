@@ -1,8 +1,9 @@
 use crate::{
     data_types::scaler::{ClassValue, Scalar, UserFn},
     environment::Environment,
+    error::report_runtime,
     stmt::Stmt,
-    InterpretRet,
+    InterpretRet, InterpretRtErr,
 };
 
 use super::{error::InterpretResult, Evaluator, InterpretError, Interprete};
@@ -72,10 +73,16 @@ impl Interprete<Stmt> for Evaluator {
                 let name = &class.name.lexeme;
 
                 let super_class = if let Some(super_class) = &class.superclass {
-                    let super_class = self.eval(super_class).expect("superclass not found");
-                    let super_class = super_class.as_class().unwrap().clone();
+                    let super_value = self.eval(super_class).expect("superclass not found");
 
-                    Some(super_class)
+                    let Some(super_value) = super_value.as_class() else {
+                        report_runtime(class.name.line, "Superclass must be a class.".to_string());
+                        return InterpretRtErr!(;"superclass must be a class");
+                    };
+
+                    // let super_class = super_value.clone();
+
+                    Some(super_value.clone())
                 } else {
                     None
                 };
